@@ -2,60 +2,60 @@
 //  ContentView.swift
 //  Memo
 //
-//  Created by Bhara Alfhaniawan on 27/06/26.
+//  Root navigation shell.
+//  - Shows OnboardingView on first launch
+//  - Then shows the TabView with Home + Memories + Settings
 //
 
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+
+    @Environment(AppContainer.self) private var appContainer
+    @State private var selectedTab = 0
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at test2 \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
+        Group {
+            if !appContainer.hasCompletedOnboarding {
+                OnboardingView()
+                    .transition(.asymmetric(
+                        insertion: .opacity,
+                        removal: .move(edge: .top).combined(with: .opacity)
+                    ))
+            } else {
+                mainTabs
+                    .transition(.opacity.animation(.easeIn(duration: 0.4)))
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
         }
+        .animation(.spring(response: 0.5, dampingFraction: 0.9), value: appContainer.hasCompletedOnboarding)
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
+    // MARK: - Main Tabs
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+    private var mainTabs: some View {
+        TabView(selection: $selectedTab) {
+            // Home
+            Tab("Home", systemImage: "house.fill", value: 0) {
+                HomeView()
+            }
+
+            // Memories (all transactions)
+            Tab("Memories", systemImage: "brain", value: 1) {
+                TransactionListView()
+            }
+
+            // Settings
+            Tab("Settings", systemImage: "gearshape.fill", value: 2) {
+                SettingsView()
             }
         }
+        .tint(.memoPrimary)
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .environment(AppContainer())
+        .modelContainer(PersistenceController.shared.container)
 }
