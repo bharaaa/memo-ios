@@ -64,8 +64,12 @@ final class TransactionPreviewViewModel {
         self.confidence      = parsed.confidence
         self.providerName    = parsed.providerName
 
-        // Resolve category from hint
-        self.selectedCategory = categoryService.match(hint: parsed.categoryHint)
+        // Resolve category from hint, fallback to merchant name as a hint
+        if let cat = categoryService.match(hint: parsed.categoryHint) {
+            self.selectedCategory = cat
+        } else {
+            self.selectedCategory = categoryService.match(hint: parsed.merchantName)
+        }
 
         // Resolve account from hint or fallback to default
         if let accountHint = parsed.accountHint?.lowercased() {

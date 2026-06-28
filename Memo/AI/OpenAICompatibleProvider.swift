@@ -52,7 +52,7 @@ struct OpenAICompatibleProvider: AIProvider {
         Schema: { "amount": number|null, "currencyCode": string|null, "merchantName": string|null,
           "categoryHint": string|null, "note": string|null, "dateString": string|null (YYYY-MM-DD),
           "transactionType": "expense"|"income", "confidence": number (0-1) }
-        Rules: "k" = *1000, "m" = *1000000. Default transactionType to "expense".
+        Rules: "k" = *1000, "m" = *1000000. Default transactionType to "expense". Always intelligently populate 'note' with a short descriptive summary based on the input text.
         """
 
         let messages: [[String: String]] = [

@@ -28,6 +28,7 @@ final class MemoService {
 
     private let ocr           = OCRService()
 
+
     // MARK: - Confidence Threshold
 
     /// If RuleBased confidence exceeds this, AI is not called.
@@ -36,23 +37,21 @@ final class MemoService {
     // MARK: - Parse Text
 
     func parse(input: String) async throws -> ParsedTransaction {
-        // 1. Try rule-based first
-        if let result = try? await ruleBased.parse(input: input),
-           result.confidence >= ruleBasedThreshold {
-            return result
-        }
-
-        // 2. Try Apple Foundation Models
+        // 1. Try Apple Foundation Models
         if await appleFM.isAvailable {
-            return try await appleFM.parse(input: input)
+            if let result = try? await appleFM.parse(input: input) {
+                return result
+            }
         }
 
-        // 3. Try OpenAI-compatible fallback
+        // 2. Try OpenAI-compatible API
         if await openAI.isAvailable {
-            return try await openAI.parse(input: input)
+            if let result = try? await openAI.parse(input: input) {
+                return result
+            }
         }
 
-        // 4. Last resort: return the rule-based result even if low confidence
+        // 3. Fallback to rule-based parser if AI is unavailable or offline
         if let result = try? await ruleBased.parse(input: input) {
             return result
         }

@@ -82,6 +82,7 @@ struct AppleFoundationProvider: AIProvider {
         - If no date is mentioned, leave dateString empty
         - transactionType should be "expense" unless clearly income
         - categoryHint should be a simple label like "food", "transport", "shopping"
+        - Always populate 'note' with a descriptive summary of the purchase based on the input text
         - confidence: 0.0–1.0 based on how certain you are
         
         User message: "\(input)"
@@ -136,7 +137,7 @@ private struct TransactionExtractionOutput {
     @Guide(description: "A simple spending category hint: food, transport, shopping, entertainment, health, bills, education, travel, salary, other.")
     var categoryHint: String?
 
-    @Guide(description: "A short note or description of the purchase. Null if none.")
+    @Guide(description: "A short note or descriptive summary of the purchase intelligently inferred from the input. Do not leave null if you can infer a context.")
     var note: String?
 
     @Guide(description: "ISO 8601 date (YYYY-MM-DD) if a date is mentioned. Empty if not.")
