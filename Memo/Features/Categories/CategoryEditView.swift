@@ -103,6 +103,10 @@ struct CategoryEditView: View {
         .navigationTitle(existingCategory != nil ? "Edit Category" : "New Category")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Cancel") { dismiss() }
+                    .foregroundStyle(.memoSecondaryText)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") { save() }
                     .fontWeight(.semibold)

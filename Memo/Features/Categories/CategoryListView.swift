@@ -2,7 +2,7 @@
 //  CategoryListView.swift
 //  Memo
 //
-//  List of all categories grouped by type (Expense/Income).
+//  List of all categories grouped by type (Expense/Income) using native iOS HIG.
 //
 
 import SwiftUI
@@ -12,84 +12,130 @@ struct CategoryListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Category.sortOrder) private var categories: [Category]
     
+    @State private var searchText: String = ""
+    @State private var categoryToEdit: Category?
+    @State private var showAddSheet: Bool = false
+    @State private var categoryToDelete: Category?
+    @State private var showDeleteConfirmation: Bool = false
+    
+    private var filteredCategories: [Category] {
+        if searchText.isEmpty {
+            return categories
+        }
+        return categories.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
     private var expenseCategories: [Category] {
-        categories.filter { $0.categoryType == .expense }
+        filteredCategories.filter { $0.categoryType == .expense }
     }
     
     private var incomeCategories: [Category] {
-        categories.filter { $0.categoryType == .income }
+        filteredCategories.filter { $0.categoryType == .income }
     }
     
     var body: some View {
-        List {
-            Section("Expenses") {
-                ForEach(expenseCategories) { category in
-                    categoryRow(category)
+        Group {
+            if categories.isEmpty && searchText.isEmpty {
+                EmptyCategoryView(onAddTapped: { showAddSheet = true })
+            } else {
+                List {
+                    if !expenseCategories.isEmpty {
+                        Section {
+                            ForEach(expenseCategories) { category in
+                                CategoryRowView(
+                                    category: category,
+                                    onEdit: { categoryToEdit = category },
+                                    onDuplicate: { duplicate(category) },
+                                    onDelete: { requestDelete(category) }
+                                )
+                            }
+                        } header: {
+                            Text("Expense").textCase(.none)
+                        }
+                    }
+                    
+                    if !incomeCategories.isEmpty {
+                        Section {
+                            ForEach(incomeCategories) { category in
+                                CategoryRowView(
+                                    category: category,
+                                    onEdit: { categoryToEdit = category },
+                                    onDuplicate: { duplicate(category) },
+                                    onDelete: { requestDelete(category) }
+                                )
+                            }
+                        } header: {
+                            Text("Income").textCase(.none)
+                        }
+                    }
                 }
-                .onMove { moveCategories(from: $0, to: $1, in: expenseCategories) }
-            }
-            
-            Section("Income") {
-                ForEach(incomeCategories) { category in
-                    categoryRow(category)
-                }
-                .onMove { moveCategories(from: $0, to: $1, in: incomeCategories) }
+                .listStyle(.insetGrouped)
+                .searchable(text: $searchText, prompt: "Search categories")
+                .animation(.default, value: filteredCategories)
             }
         }
-        .listStyle(.insetGrouped)
         .navigationTitle("Categories")
-        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                EditButton()
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink(value: "new_category") {
-                    Image(systemName: "plus")
+                Button {
+                    showAddSheet = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .symbolRenderingMode(.hierarchical)
+                        .font(.title3)
                 }
             }
         }
-        .navigationDestination(for: Category.self) { category in
-            CategoryEditView(category: category)
+        .sheet(item: $categoryToEdit) { category in
+            NavigationStack {
+                CategoryEditView(category: category)
+            }
         }
-        .navigationDestination(for: String.self) { value in
-            if value == "new_category" {
+        .sheet(isPresented: $showAddSheet) {
+            NavigationStack {
                 CategoryEditView(defaultType: .expense)
             }
         }
-    }
-    
-    private func categoryRow(_ category: Category) -> some View {
-        NavigationLink(value: category) {
-            HStack(spacing: 16) {
-                CategoryBadge(category: category, style: .filled)
-                
-                if category.isSystem {
-                    Spacer()
-                    Image(systemName: "lock.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.memoTertiaryText)
-                }
+        .confirmationDialog(
+            "Delete Category?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible,
+            presenting: categoryToDelete
+        ) { category in
+            Button("Delete Category", role: .destructive) {
+                delete(category)
             }
-            .padding(.vertical, 4)
+            Button("Cancel", role: .cancel) {
+                categoryToDelete = nil
+            }
+        } message: { category in
+            Text("Transactions in '\(category.name)' will become uncategorized.")
         }
     }
     
-    private func moveCategories(from source: IndexSet, to destination: Int, in list: [Category]) {
-        var ordered = list
-        ordered.move(fromOffsets: source, toOffset: destination)
-        
-        for (index, category) in ordered.enumerated() {
-            category.sortOrder = index
-        }
-        
+    // MARK: - Actions
+    
+    private func duplicate(_ category: Category) {
+        let newCategory = Category(
+            name: "\(category.name) Copy",
+            icon: category.icon,
+            colorHex: category.colorHex,
+            categoryType: category.categoryType,
+            isSystem: false,
+            sortOrder: categories.count
+        )
+        modelContext.insert(newCategory)
         try? modelContext.save()
     }
-}
-
-#Preview {
-    NavigationStack {
-        CategoryListView()
-            .modelContainer(PersistenceController.shared.container)
+    
+    private func requestDelete(_ category: Category) {
+        categoryToDelete = category
+        showDeleteConfirmation = true
+    }
+    
+    private func delete(_ category: Category) {
+        modelContext.delete(category)
+        try? modelContext.save()
+        categoryToDelete = nil
     }
 }
