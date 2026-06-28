@@ -12,7 +12,7 @@
 import SwiftUI
 
 struct MessageBubble: View {
-
+    @Environment(\.locale) private var locale
     let message: ChatViewModel.Message
     var onConfirm: ((ParsedTransaction) -> Void)? = nil
 
@@ -108,8 +108,8 @@ struct MessageBubble: View {
                     Text(pt.transactionType == .income ? "+" : "−")
                         .font(.memoAmount)
                         .foregroundStyle(pt.transactionType.color)
-                    Text(pt.amount?.formatted(currency: pt.currencyCode ?? "IDR") ?? "?")
-                        .font(.memoAmount)
+                    Text(pt.amount?.formatted(.currency(code: pt.currencyCode ?? "IDR").locale(locale)) ?? "?")
+                        .font(.memoAmountSmall)
                         .foregroundStyle(pt.transactionType.color)
                 }
 

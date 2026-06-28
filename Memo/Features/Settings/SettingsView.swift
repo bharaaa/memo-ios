@@ -22,6 +22,7 @@ struct SettingsView: View {
         case categories
         case budgets
         case aiProviderSelection
+        case language
     }
 
     var body: some View {
@@ -63,6 +64,8 @@ struct SettingsView: View {
                     Text("Budgets Coming Soon").navigationTitle("Budgets")
                 case .aiProviderSelection:
                     AIProviderSelectionView()
+                case .language:
+                    LanguageSettingsView()
                 }
             }
         }
@@ -98,4 +101,5 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .environment(AppContainer())
+        .environment(LanguageManager.shared)
 }

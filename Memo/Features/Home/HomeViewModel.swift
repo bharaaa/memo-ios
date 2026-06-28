@@ -199,6 +199,6 @@ final class HomeViewModel {
     // MARK: - Balance Formatting
     
     var formattedTotalAssets: String {
-        totalAssets.formatted(currency: currency)
+        totalAssets.formatted(.currency(code: currency).locale(LanguageManager.shared.currentLocale))
     }
 }

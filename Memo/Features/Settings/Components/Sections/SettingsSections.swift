@@ -11,15 +11,17 @@ import SwiftData
 // MARK: - Preferences Section
 
 struct PreferencesSection: View {
+    @Environment(LanguageManager.self) private var languageManager
+    
     let searchText: String
     let preferredCurrency: String
     let onCurrencyTap: () -> Void
     
     var body: some View {
-        Section("Preferences") {
+        Section(L10n.preferences) {
             if matches("Appearance Theme Icon") {
                 SettingsNavigationRow(
-                    title: "Appearance",
+                    title: L10n.appearance,
                     icon: "paintpalette.fill",
                     iconColor: .blue,
                     destination: SettingsView.SettingsRoute.appearance
@@ -27,7 +29,7 @@ struct PreferencesSection: View {
             }
             if matches("Currency Money") {
                 SettingsActionRow(
-                    title: "Currency",
+                    title: L10n.currency,
                     icon: "dollarsign.circle.fill",
                     iconColor: .green,
                     value: preferredCurrency,
@@ -36,17 +38,17 @@ struct PreferencesSection: View {
             }
             // Mocks for UI completeness
             if matches("Language") {
-                SettingsActionRow(
-                    title: "Language",
+                SettingsNavigationRow(
+                    title: L10n.language,
                     icon: "globe",
                     iconColor: .indigo,
-                    value: "English",
-                    action: {}
+                    subtitle: languageManager.currentLanguage.displayName,
+                    destination: SettingsView.SettingsRoute.language
                 )
             }
             if matches("Notifications") {
                 SettingsActionRow(
-                    title: "Notifications",
+                    title: L10n.notifications,
                     icon: "bell.badge.fill",
                     iconColor: .red,
                     value: "Enabled",

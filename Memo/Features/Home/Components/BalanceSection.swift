@@ -19,7 +19,8 @@ struct BalanceSection: View {
             // MARK: - Total Balance Hero
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
-                    Text("TOTAL BALANCE")
+                    Text(L10n.balance)
+                        .textCase(.uppercase)
                         .font(.caption)
                         .foregroundStyle(Color.secondary)
                         .tracking(0.5)
@@ -49,7 +50,7 @@ struct BalanceSection: View {
                         Image(systemName: "plus.circle.fill")
                             .font(.title3)
                             .foregroundStyle(Color.memoPrimary)
-                        Text("Add an Account")
+                        Text(L10n.addAccount)
                             .font(.body)
                             .foregroundStyle(Color.primary)
                     }

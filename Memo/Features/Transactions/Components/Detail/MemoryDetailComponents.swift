@@ -10,6 +10,7 @@ import SwiftUI
 // MARK: - Hero Header
 
 struct AmountHeader: View {
+    @Environment(\.locale) private var locale
     let transaction: Transaction
     
     var body: some View {
@@ -37,8 +38,11 @@ struct AmountHeader: View {
                     .font(.subheadline)
                     .foregroundStyle(Color.secondary)
                 
-                let dateStr = transaction.date.formatted(date: .abbreviated, time: .omitted)
-                let timeStr = transaction.date.formatted(date: .omitted, time: .shortened)
+                let dateStyle = Date.FormatStyle(date: .abbreviated, time: .omitted, locale: locale)
+                let timeStyle = Date.FormatStyle(date: .omitted, time: .shortened, locale: locale)
+                
+                let dateStr = transaction.date.formatted(dateStyle)
+                let timeStr = transaction.date.formatted(timeStyle)
                 Text("\(dateStr) • \(timeStr)")
                     .font(.caption)
                     .foregroundStyle(Color(UIColor.tertiaryLabel))

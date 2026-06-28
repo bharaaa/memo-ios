@@ -13,6 +13,7 @@ struct TransactionEditView: View {
     @Environment(AppContainer.self) private var appContainer
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     
     let transaction: Transaction
     
@@ -179,7 +180,7 @@ struct TransactionEditView: View {
     // MARK: - Logic
     
     private func loadData() {
-        amountString = transaction.amount.formatted(currency: transaction.currencyCode)
+        amountString = transaction.amount.formatted(.currency(code: transaction.currencyCode).locale(locale))
         merchantName = transaction.merchant?.name ?? ""
         note = transaction.note
         date = transaction.date

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SettingsNavigationRow<Destination: Hashable>: View {
-    let title: String
+    let title: LocalizedStringKey
     let icon: String
     let iconColor: Color
     var subtitle: String? = nil

@@ -62,7 +62,7 @@ final class TransactionPreviewViewModel {
         self.categoryService = categoryService
         self.modelContext = modelContext
 
-        self.amount          = parsed.amount?.formatted(currency: parsed.currencyCode ?? defaultCurrency) ?? ""
+        self.amount          = parsed.amount?.formatted(.currency(code: parsed.currencyCode ?? defaultCurrency).locale(LanguageManager.shared.currentLocale)) ?? ""
         self.merchantName    = parsed.merchantName ?? ""
         self.note            = parsed.note ?? ""
         self.date            = parsed.date ?? Date()

@@ -13,6 +13,7 @@ import SwiftData
 struct ContentView: View {
 
     @Environment(AppContainer.self) private var appContainer
+    @Environment(LanguageManager.self) private var languageManager
     @State private var selectedTab = 0
     @AppStorage("appTheme") private var appTheme: AppTheme = .system
 
@@ -31,6 +32,7 @@ struct ContentView: View {
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.9), value: appContainer.hasCompletedOnboarding)
         .preferredColorScheme(appTheme.colorScheme)
+        .environment(\.locale, languageManager.currentLocale)
     }
 
     // MARK: - Main Tabs
@@ -40,21 +42,21 @@ struct ContentView: View {
             // Home
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label(L10n.tabHome, systemImage: "house.fill")
                 }
                 .tag(0)
 
             // Memories (all transactions)
             TransactionListView()
                 .tabItem {
-                    Label("Memories", systemImage: "brain")
+                    Label(L10n.tabMemories, systemImage: "brain")
                 }
                 .tag(1)
 
             // Settings
             SettingsView()
                 .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
+                    Label(L10n.tabSettings, systemImage: "gearshape.fill")
                 }
                 .tag(2)
         }
@@ -65,5 +67,6 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(AppContainer())
+        .environment(LanguageManager.shared)
         .modelContainer(PersistenceController.shared.container)
 }

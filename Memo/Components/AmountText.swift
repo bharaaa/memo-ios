@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct AmountText: View {
+    @Environment(\.locale) private var locale
+    
     let amount: Decimal
     let currencyCode: String
     let transactionType: TransactionType
@@ -36,7 +38,7 @@ struct AmountText: View {
     }
 
     var body: some View {
-        Text("\(sign)\(amount.formatted(currency: currencyCode))")
+        Text("\(sign)\(amount.formatted(.currency(code: currencyCode).locale(locale)))")
             .font(size.font)
             .foregroundStyle(transactionType.color)
             .contentTransition(.numericText())

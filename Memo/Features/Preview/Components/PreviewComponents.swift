@@ -10,6 +10,7 @@ import SwiftUI
 // MARK: - Amount Header
 
 struct PreviewAmountHeader: View {
+    @Environment(\.locale) private var locale
     @Binding var amount: String
     let transactionType: TransactionType
     let currencyCode: String
@@ -42,8 +43,11 @@ struct PreviewAmountHeader: View {
                     .font(.subheadline)
                     .foregroundStyle(Color.secondary)
                 
-                let dateStr = date.formatted(date: .abbreviated, time: .omitted)
-                let timeStr = date.formatted(date: .omitted, time: .shortened)
+                let dateStyle = Date.FormatStyle(date: .abbreviated, time: .omitted, locale: locale)
+                let timeStyle = Date.FormatStyle(date: .omitted, time: .shortened, locale: locale)
+                
+                let dateStr = date.formatted(dateStyle)
+                let timeStr = date.formatted(timeStyle)
                 Text("\(dateStr) • \(timeStr)")
                     .font(.caption)
                     .foregroundStyle(Color(UIColor.tertiaryLabel))
