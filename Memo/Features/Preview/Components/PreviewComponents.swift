@@ -58,21 +58,42 @@ struct PreviewAmountHeader: View {
 
 struct SmartConfirmationBadge: View {
     let confidence: Double
+    let status: ParsingStatus
     
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: confidence >= 0.8 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                .foregroundStyle(confidence >= 0.8 ? Color.green : Color.orange)
+        VStack(spacing: 6) {
+            HStack(spacing: 8) {
+                if status == .parsing {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Still thinking about the category…")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.primary)
+                } else {
+                    Image(systemName: confidence >= 0.8 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .foregroundStyle(confidence >= 0.8 ? Color.green : Color.orange)
+                    
+                    Text(confidence >= 0.8 ? "Looks good!" : "Please review a few details")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.primary)
+                }
+            }
             
-            Text(confidence >= 0.8 ? "Ready to save" : "Please review a few details")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(Color.primary)
+            if status == .parsing {
+                Text("You don't have to wait — save now and we'll fill in the rest.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
+        .padding(.horizontal, 16)
         .background(Color(UIColor.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .animation(.easeInOut(duration: 0.3), value: status)
     }
 }
 
@@ -142,6 +163,7 @@ struct EditableDetailSection: View {
     let account: Account?
     @Binding var paymentMethod: PaymentMethod
     @Binding var date: Date
+    let status: ParsingStatus
     
     let onCategoryTap: () -> Void
     let onAccountTap: () -> Void
@@ -172,9 +194,21 @@ struct EditableDetailSection: View {
                 title: "Category",
                 icon: catIcon,
                 iconColor: categoryColor,
-                valueContent: { Text(catName) },
+                valueContent: {
+                    if status == .parsing && category == nil {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Thinking…")
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Text(catName)
+                    }
+                },
                 action: onCategoryTap
             )
+            .animation(.easeInOut(duration: 0.3), value: category?.name)
             
             // Account
             let accName = account?.name ?? "None"

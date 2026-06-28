@@ -11,7 +11,7 @@ import Foundation
 
 /// Intermediate representation of an AI-extracted transaction.
 /// Nil fields indicate the AI could not determine the value with confidence.
-struct ParsedTransaction: Sendable {
+struct ParsedTransaction: Sendable, Equatable {
 
     // MARK: Core Fields
 
@@ -25,6 +25,7 @@ struct ParsedTransaction: Sendable {
     var paymentMethod: PaymentMethod?
     var transactionType: TransactionType
     var confidence: Double             // 0.0–1.0
+    var status: ParsingStatus          // .parsing, .ready, .failed
 
     // MARK: Metadata
 
@@ -54,6 +55,7 @@ struct ParsedTransaction: Sendable {
         paymentMethod: PaymentMethod? = nil,
         transactionType: TransactionType = .expense,
         confidence: Double = 0.0,
+        status: ParsingStatus = .ready,
         rawInput: String = "",
         providerName: String = "unknown"
     ) {
@@ -67,6 +69,7 @@ struct ParsedTransaction: Sendable {
         self.paymentMethod = paymentMethod
         self.transactionType = transactionType
         self.confidence = confidence
+        self.status = status
         self.rawInput = rawInput
         self.providerName = providerName
     }

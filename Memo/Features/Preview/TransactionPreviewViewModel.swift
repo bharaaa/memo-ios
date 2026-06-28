@@ -29,11 +29,18 @@ final class TransactionPreviewViewModel {
     var saveError: String?
     var showAccountPicker = false
     var showCategoryPicker = false
+    
+    // For tracking if user manually overrode AI
+    private(set) var userDidSelectCategory = false
+    private(set) var userDidSelectAccount = false
 
     // MARK: - Meta
 
-    let confidence: Double
-    let providerName: String
+    var confidence: Double
+    var providerName: String
+    var status: ParsingStatus
+    
+    private var originalParsed: ParsedTransaction
 
     // MARK: - Dependencies
 
@@ -63,6 +70,8 @@ final class TransactionPreviewViewModel {
         self.currencyCode    = parsed.currencyCode ?? defaultCurrency
         self.confidence      = parsed.confidence
         self.providerName    = parsed.providerName
+        self.status          = parsed.status
+        self.originalParsed  = parsed
 
         // Resolve category from hint, fallback to merchant name as a hint
         if let cat = categoryService.match(hint: parsed.categoryHint) {
@@ -87,12 +96,62 @@ final class TransactionPreviewViewModel {
         }
     }
 
-    // MARK: - Save
+    // MARK: - Dynamic Updates
+    
+    func update(with newParsed: ParsedTransaction) {
+        // Merchant
+        if merchantName == (originalParsed.merchantName ?? "") && newParsed.merchantName != nil {
+            merchantName = newParsed.merchantName!
+        }
+        
+        // Note
+        if note == (originalParsed.note ?? "") && newParsed.note != nil {
+            note = newParsed.note!
+        }
+        
+        // Category
+        if !userDidSelectCategory {
+            if let hint = newParsed.categoryHint, let cat = categoryService.match(hint: hint) {
+                selectedCategory = cat
+            } else if let merchant = newParsed.merchantName, let cat = categoryService.match(hint: merchant) {
+                selectedCategory = cat
+            }
+        }
+        
+        // Account
+        if !userDidSelectAccount {
+            if let hint = newParsed.accountHint?.lowercased() {
+                let descriptor = FetchDescriptor<Account>(predicate: #Predicate { $0.isArchived == false })
+                if let accounts = try? modelContext.fetch(descriptor),
+                   let matched = accounts.first(where: { $0.name.lowercased().contains(hint) }) {
+                    selectedAccount = matched
+                }
+            }
+        }
+        
+        self.confidence = newParsed.confidence
+        self.providerName = newParsed.providerName
+        self.status = newParsed.status
+        self.originalParsed = newParsed
+    }
 
-    func save(completion: @escaping () -> Void) {
+    // MARK: - Manual Selections
+    
+    func userSelected(category: Category) {
+        selectedCategory = category
+        userDidSelectCategory = true
+    }
+    
+    func userSelected(account: Account) {
+        selectedAccount = account
+        userDidSelectAccount = true
+    }
+
+    @discardableResult
+    func save(completion: @escaping (Transaction?) -> Void) -> Transaction? {
         guard let amountDecimal = parseAmount() else {
             saveError = "Please enter a valid amount."
-            return
+            return nil
         }
 
         isSaving = true
@@ -122,11 +181,14 @@ final class TransactionPreviewViewModel {
                 transaction.category = cat
                 try transactionService.update(transaction)
             }
+            
             isSaving = false
-            completion()
+            completion(transaction)
+            return transaction
         } catch {
             isSaving = false
             saveError = error.localizedDescription
+            return nil
         }
     }
 

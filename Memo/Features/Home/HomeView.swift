@@ -126,10 +126,11 @@ struct HomeView: View {
         }
         .sheet(isPresented: Binding(
             get: { viewModel?.parsedTransaction != nil },
-            set: { if !$0 { viewModel?.parsedTransaction = nil } }
+            set: { if !$0 { viewModel?.markAsSaved() } }
         )) {
             if let pt = viewModel?.parsedTransaction {
-                TransactionPreviewView(parsed: pt) {
+                TransactionPreviewView(parsed: pt) { savedTransaction in
+                    viewModel?.markAsSaved(transaction: savedTransaction)
                     viewModel?.load()
                 }
                 .environment(appContainer)
@@ -145,6 +146,7 @@ struct HomeView: View {
                 transactionRepository: appContainer.transactionRepository,
                 accountRepository: appContainer.accountRepository,
                 memoService: appContainer.memoService,
+                categoryService: appContainer.categoryService,
                 currency: appContainer.preferredCurrencyCode,
                 userName: appContainer.userName
             )

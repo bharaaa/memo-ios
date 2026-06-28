@@ -20,13 +20,13 @@ import SwiftUI
 @Observable
 final class MemoService {
 
-    // MARK: - Providers (in priority order)
-
-    private let ruleBased     = RuleBasedProvider()
-    private let appleFM       = AppleFoundationProvider()
-    private let openAI        = OpenAICompatibleProvider()
-
-    private let ocr           = OCRService()
+    private let pipeline = TransactionParsingPipeline()
+    private let ocr = OCRService()
+    
+    // Fallback status checks
+    private let ruleBased = RuleBasedProvider()
+    private let appleFM = AppleFoundationProvider()
+    private let openAI = OpenAICompatibleProvider()
 
 
     // MARK: - Selected Provider
@@ -37,16 +37,27 @@ final class MemoService {
     
     // MARK: - Parse Text
 
+    func parseStream(input: String) -> AsyncStream<ParsedTransaction> {
+        return pipeline.parse(input: input, selectedProvider: selectedProvider)
+    }
+    
+    // Keep backward compatibility for single-shot (wait for final result)
     func parse(input: String) async throws -> ParsedTransaction {
-        switch selectedProvider {
-        case .appleFoundation:
-            if await appleFM.isAvailable {
-                return try await appleFM.parse(input: input)
+        let stream = parseStream(input: input)
+        var lastResult: ParsedTransaction?
+        
+        for await tx in stream {
+            lastResult = tx
+            if tx.status == .ready || tx.status == .failed {
+                break
             }
-        case .externalAPI:
-            if await openAI.isAvailable {
-                return try await openAI.parse(input: input)
+        }
+        
+        if let final = lastResult {
+            if final.status == .failed {
+                throw AIProviderError.parseFailure("Parsing failed")
             }
+            return final
         }
         
         throw AIProviderError.unavailable

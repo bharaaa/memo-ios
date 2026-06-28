@@ -88,7 +88,8 @@ struct ChatView: View {
             get: { viewModel?.showingPreview },
             set: { viewModel?.showingPreview = $0 }
         )) { parsed in
-            TransactionPreviewView(parsed: parsed) {
+            TransactionPreviewView(parsed: parsed) { savedTransaction in
+                viewModel?.markAsSaved(transaction: savedTransaction)
                 dismiss()
             }
             .environment(appContainer)
@@ -167,7 +168,8 @@ struct ChatView: View {
         if viewModel == nil {
             viewModel = ChatViewModel(
                 memoService: appContainer.memoService,
-                transactionService: appContainer.transactionService
+                transactionService: appContainer.transactionService,
+                categoryService: appContainer.categoryService
             )
         }
     }

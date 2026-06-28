@@ -17,7 +17,7 @@ struct TransactionPreviewView: View {
     @Environment(\.dismiss) private var dismiss
 
     let parsed: ParsedTransaction
-    var onSaved: (() -> Void)?
+    var onSaved: ((Transaction?) -> Void)?
 
     @State private var viewModel: TransactionPreviewViewModel?
 
@@ -40,6 +40,9 @@ struct TransactionPreviewView: View {
             }
         }
         .onAppear { setupViewModel() }
+        .onChange(of: parsed) { newValue in
+            viewModel?.update(with: newValue)
+        }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
@@ -62,7 +65,7 @@ struct TransactionPreviewView: View {
                     )
                     
                     // Smart Badge
-                    SmartConfirmationBadge(confidence: vm.confidence)
+                    SmartConfirmationBadge(confidence: vm.confidence, status: vm.status)
                         .padding(.horizontal, 16)
                     
                     // Details
@@ -72,6 +75,7 @@ struct TransactionPreviewView: View {
                         account: vm.selectedAccount,
                         paymentMethod: Binding(get: { vm.paymentMethod }, set: { vm.paymentMethod = $0 }),
                         date: Binding(get: { vm.date }, set: { vm.date = $0 }),
+                        status: vm.status,
                         onCategoryTap: { vm.showCategoryPicker = true },
                         onAccountTap: { vm.showAccountPicker = true }
                     )
@@ -101,8 +105,8 @@ struct TransactionPreviewView: View {
             SaveActionToolbar(
                 isSaving: vm.isSaving,
                 onSave: {
-                    vm.save {
-                        onSaved?()
+                    vm.save { savedTransaction in
+                        onSaved?(savedTransaction)
                         dismiss()
                     }
                 }
@@ -122,7 +126,7 @@ struct TransactionPreviewView: View {
         NavigationStack {
             List(appContainer.categoryService.allCategories(type: vm.transactionType == .income ? .income : .expense)) { cat in
                 Button {
-                    vm.selectedCategory = cat
+                    vm.userSelected(category: cat)
                     vm.showCategoryPicker = false
                 } label: {
                     HStack {
@@ -164,7 +168,7 @@ struct TransactionPreviewView: View {
         NavigationStack {
             List(vm.allAccounts()) { account in
                 Button {
-                    vm.selectedAccount = account
+                    vm.userSelected(account: account)
                     vm.showAccountPicker = false
                 } label: {
                     HStack {
