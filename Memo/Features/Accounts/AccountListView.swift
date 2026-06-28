@@ -2,7 +2,7 @@
 //  AccountListView.swift
 //  Memo
 //
-//  List of all accounts, allowing creation, edit, reorder, and delete.
+//  List of all accounts, beautifully presented as Wallet cards.
 //
 
 import SwiftUI
@@ -17,71 +17,128 @@ struct AccountListView: View {
     var body: some View {
         Group {
             if let vm = viewModel {
-                List {
-                    ForEach(vm.accounts) { account in
-                        NavigationLink(value: account) {
-                            HStack(spacing: 16) {
-                                // Icon
-                                ZStack {
-                                    Circle()
-                                        .fill(Color(hex: account.colorHex).opacity(0.15))
-                                        .frame(width: 40, height: 40)
-                                    Image(systemName: account.icon)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(Color(hex: account.colorHex))
-                                }
-                                
-                                // Name and Type
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(account.name)
-                                        .font(.memoBody)
-                                        .foregroundStyle(.memoPrimaryText)
-                                    
-                                    HStack {
-                                        Text(account.accountType.displayName)
-                                        if account.isDefault {
-                                            Text("· Default")
-                                        }
-                                        if account.isArchived {
-                                            Text("· Archived")
-                                        }
-                                    }
-                                    .font(.memoCaption)
-                                    .foregroundStyle(.memoSecondaryText)
-                                }
-                                
-                                Spacer()
-                                
-                                // Balance
-                                AmountText(
-                                    amount: account.currentBalance,
-                                    currencyCode: account.currencyCode,
-                                    transactionType: account.currentBalance < 0 ? .expense : .income,
-                                    size: .small,
-                                    showSign: false
-                                )
-                            }
-                            .padding(.vertical, 4)
+                if vm.accounts.isEmpty {
+                    EmptyAccountsView()
+                } else {
+                    List {
+                        Section {
+                            AccountSummaryHeader(
+                                activeCount: vm.activeCount,
+                                totalBalance: vm.totalBalance,
+                                preferredCurrency: appContainer.preferredCurrencyCode
+                            )
                         }
-                        .opacity(account.isArchived ? 0.6 : 1.0)
+                        
+                        Section {
+                            ForEach(vm.filteredAccounts) { account in
+                                NavigationLink(value: account) {
+                                    AccountListRow(
+                                        account: account,
+                                        transactionCount: appContainer.accountRepository.transactionCount(for: account)
+                                    )
+                                }
+                                .contextMenu {
+                                    NavigationLink(value: account) {
+                                        Label("Edit Account", systemImage: "pencil")
+                                    }
+                                    
+                                    Button {
+                                        if !account.isDefault {
+                                            account.isDefault = true
+                                            for other in vm.accounts where other.id != account.id {
+                                                other.isDefault = false
+                                            }
+                                            try? modelContext.save()
+                                            vm.load()
+                                        }
+                                    } label: {
+                                        Label("Set as Default", systemImage: "star")
+                                    }
+                                    
+                                    Button {
+                                        let newAccount = Account(
+                                            name: "\(account.name) Copy",
+                                            icon: account.icon,
+                                            colorHex: account.colorHex,
+                                            currencyCode: account.currencyCode,
+                                            accountType: account.accountType,
+                                            isDefault: false
+                                        )
+                                        newAccount.openingBalance = account.openingBalance
+                                        modelContext.insert(newAccount)
+                                        try? modelContext.save()
+                                        vm.load()
+                                    } label: {
+                                        Label("Duplicate", systemImage: "doc.on.doc")
+                                    }
+                                    
+                                    Divider()
+                                    
+                                    Button(role: .destructive) {
+                                        if let index = vm.accounts.firstIndex(of: account) {
+                                            vm.deleteAccounts(at: IndexSet(integer: index))
+                                        }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                                .swipeActions(edge: .leading) {
+                                    Button {
+                                        if !account.isDefault {
+                                            account.isDefault = true
+                                            for other in vm.accounts where other.id != account.id {
+                                                other.isDefault = false
+                                            }
+                                            try? modelContext.save()
+                                            vm.load()
+                                        }
+                                    } label: {
+                                        Label("Default", systemImage: "star.fill")
+                                    }
+                                    .tint(.orange)
+                                }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                    Button(role: .destructive) {
+                                        if let index = vm.accounts.firstIndex(of: account) {
+                                            vm.deleteAccounts(at: IndexSet(integer: index))
+                                        }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                    
+                                    Button {
+                                        account.isArchived.toggle()
+                                        try? modelContext.save()
+                                        vm.load()
+                                    } label: {
+                                        Label(account.isArchived ? "Unarchive" : "Archive", systemImage: "archivebox")
+                                    }
+                                    .tint(.gray)
+                                }
+                            }
+                            .onMove { source, destination in
+                                vm.moveAccounts(from: source, to: destination)
+                            }
+                        }
                     }
-                    .onMove { source, destination in
-                        vm.moveAccounts(from: source, to: destination)
-                    }
-                    .onDelete { offsets in
-                        vm.deleteAccounts(at: offsets)
-                    }
+                    .listStyle(.insetGrouped)
                 }
-                .listStyle(.insetGrouped)
             } else {
                 ProgressView()
             }
         }
+        .background(Color.memoBackground)
         .navigationTitle("Accounts")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.large)
+        .searchable(text: Binding(
+            get: { viewModel?.searchText ?? "" },
+            set: { viewModel?.searchText = $0 }
+        ), prompt: "Search Accounts")
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                EditButton()
+            if let vm = viewModel, !vm.accounts.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    EditButton()
+                }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink(value: "new_account") {
@@ -110,13 +167,5 @@ struct AccountListView: View {
             }
             viewModel?.load()
         }
-    }
-}
-
-#Preview {
-    NavigationStack {
-        AccountListView()
-            .environment(AppContainer())
-            .modelContainer(PersistenceController.shared.container)
     }
 }
