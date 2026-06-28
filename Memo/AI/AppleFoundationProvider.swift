@@ -83,6 +83,8 @@ struct AppleFoundationProvider: AIProvider {
         - If no date is mentioned, leave dateString empty
         - transactionType should be "expense" unless clearly income
         - categoryHint should be a simple label like "food", "transport", "shopping"
+        - accountHint should be a simple label like "cash", "bank", "credit card", "bca" if mentioned
+        - paymentMethod should be one of: "cash", "debit", "credit", "transfer", "other" (default to cash if unclear)
         - Always populate 'note' with a descriptive summary of the purchase based on the input text
         - Assume the default currency is \(preferredCurrency) unless explicitly stated otherwise
         - confidence: 0.0–1.0 based on how certain you are
@@ -96,18 +98,29 @@ struct AppleFoundationProvider: AIProvider {
     private func convert(_ output: TransactionExtractionOutput, rawInput: String) -> ParsedTransaction {
         var parsed = ParsedTransaction(rawInput: rawInput, providerName: name)
 
-        if let a = output.amount, a > 0 {
+        if let amtStr = output.amount, let a = Double(amtStr), a > 0 {
             parsed.amount = Decimal(a)
         }
         parsed.merchantName  = output.merchantName?.isEmpty == false ? output.merchantName : nil
         parsed.categoryHint  = output.categoryHint
+        parsed.accountHint   = output.accountHint
         parsed.note          = output.note?.isEmpty == false ? output.note : nil
         parsed.currencyCode  = output.currencyCode?.isEmpty == false ? output.currencyCode : nil
-        parsed.confidence    = output.confidence ?? 0.5
+        
+        if let confStr = output.confidence, let c = Double(confStr) {
+            parsed.confidence = c
+        } else {
+            parsed.confidence = 0.5
+        }
 
         // Parse transaction type
         if let type = output.transactionType {
             parsed.transactionType = type.lowercased() == "income" ? .income : .expense
+        }
+        
+        // Parse payment method
+        if let pm = output.paymentMethod?.lowercased() {
+            parsed.paymentMethod = PaymentMethod(rawValue: pm) ?? .cash
         }
 
         // Parse date
@@ -127,8 +140,8 @@ struct AppleFoundationProvider: AIProvider {
 /// All fields are optional so partial results are still useful.
 @Generable
 private struct TransactionExtractionOutput {
-    @Guide(description: "The numeric amount of money involved. Apply k/m multipliers.")
-    var amount: Double?
+    @Guide(description: "The numeric amount of money involved, represented as a string. Apply k/m multipliers.")
+    var amount: String?
 
     @Guide(description: "ISO 4217 currency code if mentioned (e.g. IDR, USD). Null if not specified.")
     var currencyCode: String?
@@ -139,6 +152,9 @@ private struct TransactionExtractionOutput {
     @Guide(description: "A simple spending category hint: food, transport, shopping, entertainment, health, bills, education, travel, salary, other.")
     var categoryHint: String?
 
+    @Guide(description: "A hint for the account used if mentioned (e.g. cash, bank, credit card, bca). Null if not specified.")
+    var accountHint: String?
+
     @Guide(description: "A short note or descriptive summary of the purchase intelligently inferred from the input. Do not leave null if you can infer a context.")
     var note: String?
 
@@ -147,7 +163,10 @@ private struct TransactionExtractionOutput {
 
     @Guide(description: "expense or income. Default to expense.")
     var transactionType: String?
+    
+    @Guide(description: "The payment method used: cash, debit, credit, transfer, or other.")
+    var paymentMethod: String?
 
-    @Guide(description: "How confident you are in the extraction, from 0.0 to 1.0.")
-    var confidence: Double?
+    @Guide(description: "How confident you are in the extraction, from 0.0 to 1.0, represented as a string.")
+    var confidence: String?
 }

@@ -109,6 +109,11 @@ final class TransactionPreviewViewModel {
             note = newParsed.note!
         }
         
+        // Payment Method
+        if paymentMethod == (originalParsed.paymentMethod ?? .cash) && newParsed.paymentMethod != nil {
+            paymentMethod = newParsed.paymentMethod!
+        }
+        
         // Category
         if !userDidSelectCategory {
             if let hint = newParsed.categoryHint, let cat = categoryService.match(hint: hint) {
@@ -169,6 +174,10 @@ final class TransactionPreviewViewModel {
             rawInput: "",
             providerName: "user_confirmed"
         )
+        
+        // Let the repository know it should be created with isProcessing=true
+        // if we are still waiting for LLM results.
+        let processing = (status == .parsing)
 
         do {
             let transaction = try transactionService.save(
@@ -176,11 +185,17 @@ final class TransactionPreviewViewModel {
                 account: selectedAccount,
                 preferredCurrency: currencyCode
             )
+            
             // Apply user-selected category directly
             if let cat = selectedCategory {
                 transaction.category = cat
-                try transactionService.update(transaction)
             }
+            
+            if processing {
+                transaction.isProcessing = true
+            }
+            
+            try transactionService.update(transaction)
             
             isSaving = false
             completion(transaction)

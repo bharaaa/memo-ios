@@ -169,9 +169,27 @@ final class HomeViewModel {
             didChange = true
         }
         
+        if let hint = enriched.accountHint?.lowercased(), !hint.isEmpty {
+            // Find a matching account
+            if let matched = accounts.first(where: { $0.name.lowercased().contains(hint) }) {
+                if tx.account?.id != matched.id {
+                    tx.account = matched
+                    didChange = true
+                }
+            }
+        }
+        
+        if let pm = enriched.paymentMethod, pm != .cash, tx.paymentMethod == .cash {
+            tx.paymentMethod = pm
+            didChange = true
+        }
+        
         if didChange {
+            tx.isProcessing = false
             tx.updatedAt = Date()
             // SwiftData auto-saves on context changes
+        } else {
+            tx.isProcessing = false
         }
         
         savedTransaction = nil

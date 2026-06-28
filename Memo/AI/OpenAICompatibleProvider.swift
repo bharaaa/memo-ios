@@ -51,8 +51,8 @@ struct OpenAICompatibleProvider: AIProvider {
         let systemPrompt = """
         You are a financial assistant. Extract transaction details and respond ONLY with valid JSON.
         Schema: { "amount": number|null, "currencyCode": string|null, "merchantName": string|null,
-          "categoryHint": string|null, "note": string|null, "dateString": string|null (YYYY-MM-DD),
-          "transactionType": "expense"|"income", "confidence": number (0-1) }
+          "categoryHint": string|null, "accountHint": string|null, "note": string|null, "dateString": string|null (YYYY-MM-DD),
+          "transactionType": "expense"|"income", "paymentMethod": "cash"|"debit"|"credit"|"transfer"|"other"|null, "confidence": number (0-1) }
         Rules: "k" = *1000, "m" = *1000000. Default transactionType to "expense". Assume the default currency is \(preferredCurrency) unless explicitly stated otherwise. Always intelligently populate 'note' with a short descriptive summary based on the input text.
         """
 
@@ -121,11 +121,16 @@ struct OpenAICompatibleProvider: AIProvider {
         result.currencyCode  = json["currencyCode"] as? String
         result.merchantName  = json["merchantName"] as? String
         result.categoryHint  = json["categoryHint"] as? String
+        result.accountHint   = json["accountHint"] as? String
         result.note          = json["note"] as? String
         result.confidence    = json["confidence"] as? Double ?? 0.6
 
         if let type = json["transactionType"] as? String {
             result.transactionType = type == "income" ? .income : .expense
+        }
+        
+        if let pm = json["paymentMethod"] as? String {
+            result.paymentMethod = PaymentMethod(rawValue: pm) ?? .cash
         }
 
         if let ds = json["dateString"] as? String, !ds.isEmpty {

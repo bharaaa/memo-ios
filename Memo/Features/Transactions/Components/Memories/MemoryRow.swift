@@ -18,10 +18,14 @@ struct MemoryRow: View {
                 Circle()
                     .fill(categoryColor)
                     .frame(width: 40, height: 40)
-                
-                Image(systemName: transaction.category?.icon ?? transaction.transactionType.symbol)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(.white)
+                if transaction.isProcessing {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Image(systemName: transaction.category?.icon ?? transaction.transactionType.symbol)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.white)
+                }
             }
             
             // Details
@@ -33,14 +37,20 @@ struct MemoryRow: View {
                     .lineLimit(1)
                 
                 HStack(spacing: 6) {
-                    Text("\(transaction.account?.name ?? "Unknown") • \(relativeDateString(for: transaction.date))")
-                        .font(.caption)
-                        .foregroundStyle(Color.secondary)
-                    
-                    if transaction.source == .chat || transaction.source == .ocr {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(Color(UIColor.tertiaryLabel))
+                    if transaction.isProcessing {
+                        Text("Organizing details…")
+                            .font(.caption)
+                            .foregroundStyle(Color.secondary)
+                    } else {
+                        Text("\(transaction.account?.name ?? "Unknown") • \(relativeDateString(for: transaction.date))")
+                            .font(.caption)
+                            .foregroundStyle(Color.secondary)
+                        
+                        if transaction.source == .chat || transaction.source == .ocr {
+                            Image(systemName: "sparkles")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(Color(UIColor.tertiaryLabel))
+                        }
                     }
                 }
             }
@@ -69,6 +79,9 @@ struct MemoryRow: View {
         }
         if !transaction.note.isEmpty {
             return transaction.note
+        }
+        if transaction.isProcessing {
+            return "Just a moment"
         }
         return transaction.category?.name ?? "Transaction"
     }

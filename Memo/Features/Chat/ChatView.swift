@@ -169,7 +169,8 @@ struct ChatView: View {
             viewModel = ChatViewModel(
                 memoService: appContainer.memoService,
                 transactionService: appContainer.transactionService,
-                categoryService: appContainer.categoryService
+                categoryService: appContainer.categoryService,
+                accountRepository: appContainer.accountRepository
             )
         }
     }

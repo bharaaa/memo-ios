@@ -49,17 +49,20 @@ final class ChatViewModel {
     private let memoService: MemoService
     private let transactionService: TransactionService
     private let categoryService: CategoryService?
+    private let accountRepository: AccountRepositoryProtocol
 
     // MARK: - Init
 
     init(
         memoService: MemoService,
         transactionService: TransactionService,
-        categoryService: CategoryService? = nil
+        categoryService: CategoryService? = nil,
+        accountRepository: AccountRepositoryProtocol
     ) {
         self.memoService = memoService
         self.transactionService = transactionService
         self.categoryService = categoryService
+        self.accountRepository = accountRepository
     }
 
     // MARK: - Send
@@ -147,9 +150,27 @@ final class ChatViewModel {
             didChange = true
         }
         
+        if let hint = enriched.accountHint?.lowercased(), !hint.isEmpty {
+            let accounts = accountRepository.allAccounts()
+            if let matched = accounts.first(where: { $0.name.lowercased().contains(hint) }) {
+                if tx.account?.id != matched.id {
+                    tx.account = matched
+                    didChange = true
+                }
+            }
+        }
+        
+        if let pm = enriched.paymentMethod, pm != .cash, tx.paymentMethod == .cash {
+            tx.paymentMethod = pm
+            didChange = true
+        }
+        
         if didChange {
+            tx.isProcessing = false
             tx.updatedAt = Date()
             // SwiftData auto-saves on context changes
+        } else {
+            tx.isProcessing = false
         }
         
         savedTransaction = nil

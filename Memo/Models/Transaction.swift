@@ -23,6 +23,7 @@ final class Transaction: Identifiable {
     var source: TransactionSource
     var confidence: Double     // 0.0 = unknown, 1.0 = certain
     var isConfirmed: Bool      // user has reviewed and confirmed
+    var isProcessing: Bool = false // waiting for background LLM enrichment
     var createdAt: Date
     var updatedAt: Date
 
@@ -58,7 +59,8 @@ final class Transaction: Identifiable {
         transactionType: TransactionType = .expense,
         source: TransactionSource = .chat,
         confidence: Double = 1.0,
-        isConfirmed: Bool = false
+        isConfirmed: Bool = false,
+        isProcessing: Bool = false
     ) {
         self.id = UUID()
         self.amount = amount
@@ -70,6 +72,7 @@ final class Transaction: Identifiable {
         self.source = source
         self.confidence = confidence
         self.isConfirmed = isConfirmed
+        self.isProcessing = isProcessing
         self.createdAt = Date()
         self.updatedAt = Date()
         self.attachments = []
