@@ -14,7 +14,7 @@ final class HomeViewModel {
     // MARK: - State
     
     var recentTransactions: [Transaction] = []
-    var totalAssets: Decimal = 0
+    var totalAssets: Money = Money.zero
     var timeGreeting: String = ""
     var userGreetingName: String = ""
     
@@ -44,7 +44,7 @@ final class HomeViewModel {
     private let accountRepository: AccountRepositoryProtocol
     private let memoService: MemoService
     private let categoryService: CategoryService?
-    private let currency: String
+    private let currencyService: CurrencyService
     private let userName: String
 
     // MARK: - Init
@@ -54,14 +54,13 @@ final class HomeViewModel {
         accountRepository: AccountRepositoryProtocol,
         memoService: MemoService,
         categoryService: CategoryService? = nil,
-        currency: String,
         userName: String
     ) {
         self.transactionRepository = transactionRepository
         self.accountRepository = accountRepository
         self.memoService = memoService
         self.categoryService = categoryService
-        self.currency = currency
+        self.currencyService = CurrencyService.shared
         self.userName = userName
     }
 
@@ -69,7 +68,7 @@ final class HomeViewModel {
 
     func load() {
         recentTransactions = transactionRepository.recentTransactions(limit: 5)
-        totalAssets = accountRepository.totalAssets()
+        totalAssets = accountRepository.totalAssets(in: currencyService.baseCurrency)
         accounts = accountRepository.allAccounts()
         let (time, name) = buildGreetingParts()
         timeGreeting = time
@@ -199,6 +198,6 @@ final class HomeViewModel {
     // MARK: - Balance Formatting
     
     var formattedTotalAssets: String {
-        totalAssets.formatted(.currency(code: currency).locale(LanguageManager.shared.currentLocale))
+        MoneyFormatter.format(totalAssets, locale: LanguageManager.shared.currentLocale)
     }
 }

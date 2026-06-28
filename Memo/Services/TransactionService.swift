@@ -17,12 +17,23 @@ final class TransactionService {
     private let accountRepository: AccountRepositoryProtocol
     private let categoryService: CategoryService
     private let context: ModelContext
+    private let conversionEngine: ConversionEngine
+    private let currencyService: CurrencyService
 
-    init(repository: TransactionRepositoryProtocol, accountRepository: AccountRepositoryProtocol, categoryService: CategoryService, context: ModelContext) {
+    init(
+        repository: TransactionRepositoryProtocol,
+        accountRepository: AccountRepositoryProtocol,
+        categoryService: CategoryService,
+        context: ModelContext,
+        conversionEngine: ConversionEngine = ConversionEngine(),
+        currencyService: CurrencyService = CurrencyService.shared
+    ) {
         self.repository = repository
         self.accountRepository = accountRepository
         self.categoryService = categoryService
         self.context = context
+        self.conversionEngine = conversionEngine
+        self.currencyService = currencyService
     }
 
     // MARK: - Validation
@@ -58,12 +69,10 @@ final class TransactionService {
     @discardableResult
     func save(
         parsed: ParsedTransaction,
-        account: Account?,
-        preferredCurrency: String
-    ) throws -> Transaction {
+        account: Account?
+    ) async throws -> Transaction {
         try validate(parsed)
 
-        let currency = parsed.currencyCode ?? preferredCurrency
         let resolvedAccount: Account?
         if let acc = account {
             resolvedAccount = acc
@@ -77,9 +86,31 @@ final class TransactionService {
             throw ValidationError.missingAccount
         }
 
+        let originalCurrency = finalAccount.currencyCode
+        var finalAmount = parsed.amount!
+        
+        // If AI parsed a different currency than the account, we theoretically should convert it.
+        // For now, if the user picks an IDR account, the money is stored as IDR.
+        // If AI parsed USD, we convert it to the account's currency first.
+        if let parsedCurrencyRaw = parsed.currencyCode,
+           let parsedCurrency = CurrencyCode(rawValue: parsedCurrencyRaw),
+           parsedCurrency != originalCurrency {
+            let parsedMoney = Money(amount: finalAmount, currencyCode: parsedCurrency)
+            let conversion = try await conversionEngine.convert(parsedMoney, to: originalCurrency)
+            finalAmount = conversion.convertedMoney.amount
+        }
+        
+        let originalMoney = Money(amount: finalAmount, currencyCode: originalCurrency)
+        
+        // Convert to Base Currency for reports/summaries
+        let baseCurrency = currencyService.baseCurrency
+        let conversion = try await conversionEngine.convert(originalMoney, to: baseCurrency)
+        
         let transaction = Transaction(
-            amount: parsed.amount!,
-            currencyCode: currency,
+            originalMoney: originalMoney,
+            convertedMoney: conversion.convertedMoney,
+            exchangeRate: conversion.rate,
+            exchangeRateDate: Date(),
             note: parsed.note ?? "",
             date: parsed.date ?? Date(),
             paymentMethod: parsed.paymentMethod ?? .cash,
@@ -112,8 +143,24 @@ final class TransactionService {
     // MARK: - Direct Save
 
     /// Saves an already-constructed Transaction (from the preview/edit screen).
-    func save(_ transaction: Transaction) throws {
-        guard transaction.account != nil else { throw ValidationError.missingAccount }
+    func save(_ transaction: Transaction) async throws {
+        guard let account = transaction.account else { throw ValidationError.missingAccount }
+        
+        // Ensure the transaction currency matches the account currency
+        if transaction.originalMoney.currencyCode != account.currencyCode {
+            transaction.originalMoney = Money(amount: transaction.originalMoney.amount, currencyCode: account.currencyCode)
+        }
+        
+        // Always re-convert when saving manually to ensure base currency is up to date
+        let baseCurrency = currencyService.baseCurrency
+        let conversion = try await conversionEngine.convert(transaction.originalMoney, to: baseCurrency)
+        
+        transaction.convertedMoney = conversion.convertedMoney
+        transaction.exchangeRate = conversion.rate
+        // We do NOT update exchangeRateDate here if it's an old transaction, 
+        // to preserve historical rates. But if it's a new edit, we might.
+        // For simplicity, we just keep the original date unless it's a brand new transaction.
+        
         transaction.updatedAt = Date()
         try repository.save(transaction)
     }
@@ -128,18 +175,20 @@ final class TransactionService {
     
     @discardableResult
     func createTransfer(
-        amount: Decimal,
-        currencyCode: String,
+        amount: Decimal, // The amount in the source account's currency
         from sourceAccount: Account,
         to destinationAccount: Account,
         date: Date = Date(),
         note: String = ""
-    ) throws -> Transfer {
+    ) async throws -> Transfer {
         guard amount > 0 else { throw ValidationError.negativeAmount }
 
+        let sourceMoney = Money(amount: amount, currencyCode: sourceAccount.currencyCode)
+        let baseCurrency = currencyService.baseCurrency
+        let conversion = try await conversionEngine.convert(sourceMoney, to: baseCurrency)
+        
         let transfer = Transfer(
-            amount: amount,
-            currencyCode: currencyCode,
+            money: sourceMoney,
             date: date,
             note: note,
             fromAccount: sourceAccount,
@@ -148,8 +197,10 @@ final class TransactionService {
         context.insert(transfer)
 
         let debit = Transaction(
-            amount: amount,
-            currencyCode: currencyCode,
+            originalMoney: sourceMoney,
+            convertedMoney: conversion.convertedMoney,
+            exchangeRate: conversion.rate,
+            exchangeRateDate: date,
             note: note.isEmpty ? "Transfer to \(destinationAccount.name)" : note,
             date: date,
             paymentMethod: .transfer,
@@ -163,9 +214,16 @@ final class TransactionService {
         context.insert(debit)
         transfer.debitTransaction = debit
 
+        // Credit side needs to be in destination account's currency
+        let destConversion = try await conversionEngine.convert(sourceMoney, to: destinationAccount.currencyCode)
+        let destMoney = destConversion.convertedMoney
+        let destToBaseConversion = try await conversionEngine.convert(destMoney, to: baseCurrency)
+        
         let credit = Transaction(
-            amount: amount,
-            currencyCode: currencyCode,
+            originalMoney: destMoney,
+            convertedMoney: destToBaseConversion.convertedMoney,
+            exchangeRate: destToBaseConversion.rate,
+            exchangeRateDate: date,
             note: note.isEmpty ? "Transfer from \(sourceAccount.name)" : note,
             date: date,
             paymentMethod: .transfer,
@@ -186,10 +244,12 @@ final class TransactionService {
     // MARK: - Duplicate
     
     @discardableResult
-    func duplicate(_ transaction: Transaction) throws -> Transaction {
+    func duplicate(_ transaction: Transaction) async throws -> Transaction {
         let newTransaction = Transaction(
-            amount: transaction.amount,
-            currencyCode: transaction.currencyCode,
+            originalMoney: transaction.originalMoney,
+            convertedMoney: transaction.convertedMoney, // will be re-calculated in save
+            exchangeRate: transaction.exchangeRate,
+            exchangeRateDate: Date(),
             note: transaction.note + " (Copy)",
             date: Date(), // Usually duplicates are for a new date (today)
             paymentMethod: transaction.paymentMethod,
@@ -202,17 +262,15 @@ final class TransactionService {
         newTransaction.category = transaction.category
         newTransaction.merchant = transaction.merchant
         
-        try repository.save(newTransaction)
+        try await save(newTransaction)
         
         return newTransaction
     }
 
     // MARK: - Update
 
-    func update(_ transaction: Transaction) throws {
-        guard transaction.account != nil else { throw ValidationError.missingAccount }
-        transaction.updatedAt = Date()
-        try repository.save(transaction)
+    func update(_ transaction: Transaction) async throws {
+        try await save(transaction)
     }
 
 

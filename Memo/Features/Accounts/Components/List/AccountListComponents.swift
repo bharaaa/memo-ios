@@ -12,8 +12,7 @@ import SwiftData
 
 struct AccountSummaryHeader: View {
     let activeCount: Int
-    let totalBalance: Decimal
-    let preferredCurrency: String
+    let totalBalance: Money
     
     var body: some View {
         HStack {
@@ -24,9 +23,8 @@ struct AccountSummaryHeader: View {
             }
             Spacer()
             AmountText(
-                amount: totalBalance,
-                currencyCode: preferredCurrency,
-                transactionType: totalBalance < 0 ? .expense : .income,
+                money: totalBalance,
+                transactionType: totalBalance.amount < 0 ? .expense : .income,
                 size: .small,
                 showSign: false
             )
@@ -82,9 +80,8 @@ struct AccountListRow: View {
                 
                 // Balance
                 AmountText(
-                    amount: account.currentBalance,
-                    currencyCode: account.currencyCode,
-                    transactionType: account.currentBalance < 0 ? .expense : .income,
+                    money: account.currentBalance,
+                    transactionType: account.currentBalance.amount < 0 ? .expense : .income,
                     size: .small,
                     showSign: false
                 )

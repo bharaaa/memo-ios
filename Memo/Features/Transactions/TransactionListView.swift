@@ -96,13 +96,17 @@ struct TransactionListView: View {
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                         Button(role: .destructive) {
-                                            try? appContainer.transactionService.delete(transaction)
+                                            Task {
+                                                try? await appContainer.transactionService.delete(transaction)
+                                            }
                                         } label: {
                                             Label("Delete", systemImage: "trash")
                                         }
                                         
                                         Button {
-                                            try? appContainer.transactionService.duplicate(transaction)
+                                            Task {
+                                                try? await appContainer.transactionService.duplicate(transaction)
+                                            }
                                         } label: {
                                             Label("Duplicate", systemImage: "doc.on.doc")
                                         }

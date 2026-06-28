@@ -116,7 +116,7 @@ final class PersistenceController {
             name: "Cash",
             icon: "banknote",
             colorHex: "#10B981",
-            currencyCode: currencyCode,
+            currencyCode: CurrencyCode(rawValue: currencyCode) ?? .idr,
             accountType: .cash,
             isDefault: true      // Cash is the default account
         )
@@ -124,7 +124,7 @@ final class PersistenceController {
             name: "Bank",
             icon: "building.columns",
             colorHex: "#3B82F6",
-            currencyCode: currencyCode,
+            currencyCode: CurrencyCode(rawValue: currencyCode) ?? .idr,
             accountType: .bank,
             isDefault: false
         )

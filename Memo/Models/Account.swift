@@ -16,8 +16,22 @@ final class Account: Identifiable {
     var name: String
     var icon: String           // SF Symbol name
     var colorHex: String
-    var currencyCode: String   // ISO 4217, e.g. "IDR", "USD"
-    var openingBalance: Decimal = 0
+    var currencyCodeRaw: String
+    var openingBalanceAmount: Decimal
+    
+    // Computed properties for clean Money access
+    @Transient var currencyCode: CurrencyCode {
+        get { CurrencyCode(rawValue: currencyCodeRaw) ?? .idr }
+        set { currencyCodeRaw = newValue.rawValue }
+    }
+    
+    @Transient var openingBalance: Money {
+        get { Money(amount: openingBalanceAmount, currencyCode: currencyCode) }
+        set { 
+            openingBalanceAmount = newValue.amount
+            currencyCodeRaw = newValue.currencyCode.rawValue
+        }
+    }
     var accountType: AccountType
     var isDefault: Bool        // one account can be the default for new transactions
     var isArchived: Bool
@@ -27,21 +41,22 @@ final class Account: Identifiable {
     @Relationship(deleteRule: .nullify, inverse: \Transaction.account)
     var transactions: [Transaction]
 
-    var currentBalance: Decimal {
+    var currentBalance: Money {
         let income = transactions
             .filter { $0.transactionType == .income }
-            .reduce(Decimal(0)) { $0 + $1.amount }
+            .reduce(Decimal(0)) { $0 + $1.originalMoneyAmount }
         let expense = transactions
             .filter { $0.transactionType == .expense }
-            .reduce(Decimal(0)) { $0 + $1.amount }
-        return openingBalance + income - expense
+            .reduce(Decimal(0)) { $0 + $1.originalMoneyAmount }
+        let balance = openingBalanceAmount + income - expense
+        return Money(amount: balance, currencyCode: currencyCode)
     }
 
     init(
         name: String,
         icon: String,
         colorHex: String,
-        currencyCode: String,
+        currencyCode: CurrencyCode,
         accountType: AccountType,
         isDefault: Bool = false
     ) {
@@ -49,8 +64,8 @@ final class Account: Identifiable {
         self.name = name
         self.icon = icon
         self.colorHex = colorHex
-        self.currencyCode = currencyCode
-        self.openingBalance = 0
+        self.currencyCodeRaw = currencyCode.rawValue
+        self.openingBalanceAmount = 0
         self.accountType = accountType
         self.isDefault = isDefault
         self.isArchived = false

@@ -100,8 +100,7 @@ struct HomeView: View {
             .navigationDestination(for: Account.self) { account in
                 AccountDetailView(
                     account: account,
-                    context: modelContext,
-                    defaultCurrency: appContainer.preferredCurrencyCode
+                    context: modelContext
                 )
             }
             .navigationDestination(for: String.self) { value in
@@ -147,7 +146,6 @@ struct HomeView: View {
                 accountRepository: appContainer.accountRepository,
                 memoService: appContainer.memoService,
                 categoryService: appContainer.categoryService,
-                currency: appContainer.preferredCurrencyCode,
                 userName: appContainer.userName
             )
         }

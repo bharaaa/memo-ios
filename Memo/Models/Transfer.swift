@@ -13,8 +13,16 @@ import SwiftData
 @Model
 final class Transfer: Identifiable {
     var id: UUID
-    var amount: Decimal
-    var currencyCode: String
+    var amountRaw: Decimal
+    var currencyRaw: String
+    
+    @Transient var money: Money {
+        get { Money(amount: amountRaw, currencyCode: CurrencyCode(rawValue: currencyRaw) ?? .idr) }
+        set {
+            amountRaw = newValue.amount
+            currencyRaw = newValue.currencyCode.rawValue
+        }
+    }
     var date: Date
     var note: String
     var createdAt: Date
@@ -33,16 +41,15 @@ final class Transfer: Identifiable {
     var creditTransaction: Transaction?
 
     init(
-        amount: Decimal,
-        currencyCode: String,
+        money: Money,
         date: Date = Date(),
         note: String = "",
         fromAccount: Account? = nil,
         toAccount: Account? = nil
     ) {
         self.id = UUID()
-        self.amount = amount
-        self.currencyCode = currencyCode
+        self.amountRaw = money.amount
+        self.currencyRaw = money.currencyCode.rawValue
         self.date = date
         self.note = note
         self.createdAt = Date()

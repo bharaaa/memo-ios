@@ -10,7 +10,16 @@ import SwiftData
 final class Budget: Identifiable {
     var id: UUID
     var name: String
-    var limitAmount: Decimal
+    var limitAmountRaw: Decimal
+    var limitCurrencyRaw: String
+    
+    @Transient var limit: Money {
+        get { Money(amount: limitAmountRaw, currencyCode: CurrencyCode(rawValue: limitCurrencyRaw) ?? .idr) }
+        set {
+            limitAmountRaw = newValue.amount
+            limitCurrencyRaw = newValue.currencyCode.rawValue
+        }
+    }
     var period: BudgetPeriod
     var startDate: Date
     var isActive: Bool
@@ -25,7 +34,7 @@ final class Budget: Identifiable {
 
     init(
         name: String,
-        limitAmount: Decimal,
+        limit: Money,
         period: BudgetPeriod,
         startDate: Date = Date(),
         category: Category? = nil,
@@ -33,7 +42,8 @@ final class Budget: Identifiable {
     ) {
         self.id = UUID()
         self.name = name
-        self.limitAmount = limitAmount
+        self.limitAmountRaw = limit.amount
+        self.limitCurrencyRaw = limit.currencyCode.rawValue
         self.period = period
         self.startDate = startDate
         self.isActive = true

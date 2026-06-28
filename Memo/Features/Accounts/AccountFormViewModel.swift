@@ -16,7 +16,7 @@ final class AccountFormViewModel {
     var name: String
     var icon: String
     var colorHex: String
-    var currencyCode: String
+    var currencyCode: CurrencyCode
     var accountType: AccountType
     var openingBalanceString: String
     var isArchived: Bool
@@ -35,7 +35,7 @@ final class AccountFormViewModel {
     
     // MARK: - Init
     
-    init(account: Account? = nil, modelContext: ModelContext, defaultCurrency: String = "IDR") {
+    init(account: Account? = nil, modelContext: ModelContext, defaultCurrency: CurrencyCode = .idr) {
         self.modelContext = modelContext
         self.existingAccount = account
         self.isEditing = account != nil
@@ -47,7 +47,7 @@ final class AccountFormViewModel {
         self.accountType = account?.accountType ?? .bank
         self.isArchived = account?.isArchived ?? false
         
-        if let openingBalance = account?.openingBalance {
+        if let openingBalance = account?.openingBalance.amount {
             self.openingBalanceString = "\(openingBalance)"
         } else {
             self.openingBalanceString = "0"
@@ -75,7 +75,7 @@ final class AccountFormViewModel {
             account.colorHex = colorHex
             account.currencyCode = currencyCode
             account.accountType = accountType
-            account.openingBalance = openingBalance
+            account.openingBalance = Money(amount: openingBalance, currencyCode: currencyCode)
             account.isArchived = isArchived
         } else {
             // Create
@@ -87,7 +87,7 @@ final class AccountFormViewModel {
                 accountType: accountType,
                 isDefault: false
             )
-            newAccount.openingBalance = openingBalance
+            newAccount.openingBalance = Money(amount: openingBalance, currencyCode: currencyCode)
             modelContext.insert(newAccount)
         }
         

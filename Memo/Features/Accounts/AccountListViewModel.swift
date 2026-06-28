@@ -15,9 +15,11 @@ final class AccountListViewModel {
     var searchText: String = ""
     
     private let repository: AccountRepositoryProtocol
+    private let currencyService: CurrencyService
     
-    init(repository: AccountRepositoryProtocol) {
+    init(repository: AccountRepositoryProtocol, currencyService: CurrencyService = .shared) {
         self.repository = repository
+        self.currencyService = currencyService
     }
     
     func load() {
@@ -33,7 +35,7 @@ final class AccountListViewModel {
         return accounts.filter {
             $0.name.lowercased().contains(query) ||
             $0.accountType.displayName.lowercased().contains(query) ||
-            $0.currencyCode.lowercased().contains(query)
+            $0.currencyCode.rawValue.lowercased().contains(query)
         }
     }
     
@@ -41,8 +43,23 @@ final class AccountListViewModel {
         filteredAccounts.filter { !$0.isArchived }.count
     }
     
-    var totalBalance: Decimal {
-        filteredAccounts.filter { !$0.isArchived }.reduce(0) { $0 + $1.currentBalance }
+    var totalBalance: Money {
+        let baseCurrency = currencyService.baseCurrency
+        var sum: Decimal = 0
+        for account in filteredAccounts {
+            if !account.isArchived {
+                let convertedIncome = account.transactions
+                    .filter { $0.transactionType == .income }
+                    .reduce(Decimal(0)) { $0 + $1.convertedMoneyAmount }
+                
+                let convertedExpense = account.transactions
+                    .filter { $0.transactionType == .expense }
+                    .reduce(Decimal(0)) { $0 + $1.convertedMoneyAmount }
+                    
+                sum += account.openingBalanceAmount + convertedIncome - convertedExpense
+            }
+        }
+        return Money(amount: sum, currencyCode: baseCurrency)
     }
     
     func moveAccounts(from source: IndexSet, to destination: Int) {

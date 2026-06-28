@@ -108,9 +108,17 @@ struct MessageBubble: View {
                     Text(pt.transactionType == .income ? "+" : "−")
                         .font(.memoAmount)
                         .foregroundStyle(pt.transactionType.color)
-                    Text(pt.amount?.formatted(.currency(code: pt.currencyCode ?? "IDR").locale(locale)) ?? "?")
-                        .font(.memoAmountSmall)
-                        .foregroundStyle(pt.transactionType.color)
+                    
+                    if let amount = pt.amount {
+                        let money = Money(amount: amount, currencyCode: CurrencyCode(rawValue: pt.currencyCode ?? "") ?? .idr)
+                        Text(MoneyFormatter.format(money, locale: locale, showSign: false))
+                            .font(.memoAmountSmall)
+                            .foregroundStyle(pt.transactionType.color)
+                    } else {
+                        Text("?")
+                            .font(.memoAmountSmall)
+                            .foregroundStyle(pt.transactionType.color)
+                    }
                 }
 
                 // Merchant + category hint

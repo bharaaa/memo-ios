@@ -14,8 +14,31 @@ import SwiftData
 @Model
 final class Transaction: Identifiable {
     var id: UUID
-    var amount: Decimal
-    var currencyCode: String
+    var originalMoneyAmount: Decimal
+    var originalMoneyCurrencyRaw: String
+    
+    var convertedMoneyAmount: Decimal
+    var convertedMoneyCurrencyRaw: String
+    
+    var exchangeRate: Decimal
+    var exchangeRateDate: Date
+    
+    // Computed Properties for clean Money access
+    @Transient var originalMoney: Money {
+        get { Money(amount: originalMoneyAmount, currencyCode: CurrencyCode(rawValue: originalMoneyCurrencyRaw) ?? .idr) }
+        set { 
+            originalMoneyAmount = newValue.amount
+            originalMoneyCurrencyRaw = newValue.currencyCode.rawValue
+        }
+    }
+    
+    @Transient var convertedMoney: Money {
+        get { Money(amount: convertedMoneyAmount, currencyCode: CurrencyCode(rawValue: convertedMoneyCurrencyRaw) ?? .idr) }
+        set {
+            convertedMoneyAmount = newValue.amount
+            convertedMoneyCurrencyRaw = newValue.currencyCode.rawValue
+        }
+    }
     var note: String
     var date: Date
     var paymentMethod: PaymentMethod
@@ -51,8 +74,10 @@ final class Transaction: Identifiable {
     var recurringSource: RecurringTransaction?
 
     init(
-        amount: Decimal,
-        currencyCode: String,
+        originalMoney: Money,
+        convertedMoney: Money,
+        exchangeRate: Decimal = 1.0,
+        exchangeRateDate: Date = Date(),
         note: String = "",
         date: Date = Date(),
         paymentMethod: PaymentMethod = .cash,
@@ -63,8 +88,12 @@ final class Transaction: Identifiable {
         isProcessing: Bool = false
     ) {
         self.id = UUID()
-        self.amount = amount
-        self.currencyCode = currencyCode
+        self.originalMoneyAmount = originalMoney.amount
+        self.originalMoneyCurrencyRaw = originalMoney.currencyCode.rawValue
+        self.convertedMoneyAmount = convertedMoney.amount
+        self.convertedMoneyCurrencyRaw = convertedMoney.currencyCode.rawValue
+        self.exchangeRate = exchangeRate
+        self.exchangeRateDate = exchangeRateDate
         self.note = note
         self.date = date
         self.paymentMethod = paymentMethod

@@ -64,7 +64,9 @@ final class AppContainer {
             repository: transactionRepo,
             accountRepository: accountRepo,
             categoryService: self.categoryService,
-            context: context
+            context: context,
+            conversionEngine: ConversionEngine(),
+            currencyService: CurrencyService.shared
         )
         self.memoService         = MemoService()
         self.ocrService          = OCRService()

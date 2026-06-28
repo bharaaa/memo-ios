@@ -178,11 +178,10 @@ final class ChatViewModel {
 
     // MARK: - Save from preview
 
-    func save(parsed: ParsedTransaction, account: Account?, currency: String) throws -> Transaction {
-        try transactionService.save(
+    func save(parsed: ParsedTransaction, account: Account?, currency: String) async throws -> Transaction {
+        try await transactionService.save(
             parsed: parsed,
-            account: account,
-            preferredCurrency: currency
+            account: account
         )
     }
 

@@ -205,7 +205,7 @@ struct TransactionPreviewView: View {
                 transactionService: appContainer.transactionService,
                 categoryService: appContainer.categoryService,
                 modelContext: modelContext,
-                defaultCurrency: appContainer.preferredCurrencyCode
+                defaultCurrency: CurrencyCode(rawValue: appContainer.preferredCurrencyCode) ?? .idr
             )
         }
     }

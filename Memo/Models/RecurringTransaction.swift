@@ -20,8 +20,16 @@ final class RecurringTransaction: Identifiable {
     var createdAt: Date
 
     // Snapshot of the transaction to create each cycle
-    var amountSnapshot: Decimal
-    var currencyCodeSnapshot: String
+    var moneySnapshotAmount: Decimal
+    var moneySnapshotCurrencyRaw: String
+    
+    @Transient var moneySnapshot: Money {
+        get { Money(amount: moneySnapshotAmount, currencyCode: CurrencyCode(rawValue: moneySnapshotCurrencyRaw) ?? .idr) }
+        set {
+            moneySnapshotAmount = newValue.amount
+            moneySnapshotCurrencyRaw = newValue.currencyCode.rawValue
+        }
+    }
     var noteSnapshot: String
     var paymentMethodSnapshot: PaymentMethod
     var transactionTypeSnapshot: TransactionType
@@ -42,8 +50,7 @@ final class RecurringTransaction: Identifiable {
         name: String,
         frequency: RecurrenceFrequency,
         nextDueDate: Date,
-        amount: Decimal,
-        currencyCode: String,
+        moneySnapshot: Money,
         note: String = "",
         paymentMethod: PaymentMethod = .cash,
         transactionType: TransactionType = .expense
@@ -54,8 +61,8 @@ final class RecurringTransaction: Identifiable {
         self.nextDueDate = nextDueDate
         self.isActive = true
         self.createdAt = Date()
-        self.amountSnapshot = amount
-        self.currencyCodeSnapshot = currencyCode
+        self.moneySnapshotAmount = moneySnapshot.amount
+        self.moneySnapshotCurrencyRaw = moneySnapshot.currencyCode.rawValue
         self.noteSnapshot = note
         self.paymentMethodSnapshot = paymentMethod
         self.transactionTypeSnapshot = transactionType
