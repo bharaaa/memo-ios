@@ -62,7 +62,19 @@ struct TransactionForm: View {
                         .font(.memoBody)
                     Spacer()
                     if let cat = selectedCategory {
-                        CategoryBadge(category: cat, style: .filled)
+                        HStack(spacing: 8) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(hex: cat.colorHex))
+                                    .frame(width: 24, height: 24)
+                                Image(systemName: cat.icon)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .foregroundStyle(.white)
+                            }
+                            Text(cat.name)
+                                .font(.memoBody)
+                                .foregroundStyle(.memoPrimaryText)
+                        }
                     } else {
                         Text("None")
                             .font(.memoBody)

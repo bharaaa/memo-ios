@@ -114,7 +114,19 @@ struct TransactionEditView: View {
                     showCategoryPicker = false
                 } label: {
                     HStack {
-                        CategoryBadge(category: cat, style: .filled)
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(hex: cat.colorHex))
+                                    .frame(width: 28, height: 28)
+                                Image(systemName: cat.icon)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.white)
+                            }
+                            Text(cat.name)
+                                .font(.body)
+                                .foregroundStyle(.memoPrimaryText)
+                        }
                         Spacer()
                         if selectedCategory?.id == cat.id {
                             Image(systemName: "checkmark").foregroundStyle(.memoPrimary)
