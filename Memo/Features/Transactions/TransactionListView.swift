@@ -13,8 +13,10 @@ struct TransactionListView: View {
 
     @Environment(AppContainer.self) private var appContainer
     @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
+    
+    var onGoToComposer: (() -> Void)? = nil
+    @Environment(\.dismiss) private var dismiss
 
-    @State private var showChat = false
     @State private var showEditSheet = false
     @State private var transactionToEdit: Transaction?
     
@@ -62,7 +64,17 @@ struct TransactionListView: View {
         NavigationStack {
             Group {
                 if transactions.isEmpty {
-                    EmptyMemoriesView { showChat = true }
+                    EmptyMemoriesView {
+                        if let action = onGoToComposer {
+                            action()
+                        } else {
+                            dismiss()
+                        }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            NotificationCenter.default.post(name: .focusComposer, object: nil)
+                        }
+                    }
                 } else if filtered.isEmpty {
                     // Filtered empty state
                     VStack(spacing: 8) {
@@ -143,9 +155,6 @@ struct TransactionListView: View {
             .navigationDestination(for: Transaction.self) { transaction in
                 TransactionDetailView(transaction: transaction)
             }
-        }
-        .sheet(isPresented: $showChat) {
-            ChatView().environment(appContainer)
         }
         .sheet(item: $transactionToEdit) { transaction in
             TransactionEditView(transaction: transaction)

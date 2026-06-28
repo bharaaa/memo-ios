@@ -17,6 +17,8 @@ struct HomeView: View {
     @State private var showSpeechOverlay = false
     @State private var showScan = false
     @State private var showImport = false
+    
+    @FocusState private var isComposerFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -45,7 +47,8 @@ struct HomeView: View {
                                 },
                                 onImport: { showImport = true },
                                 onScan: { showScan = true },
-                                onSpeak: { showSpeechOverlay = true }
+                                onSpeak: { showSpeechOverlay = true },
+                                isFocused: $isComposerFocused
                             )
                             .padding(.bottom, 24)
                             
@@ -112,6 +115,9 @@ struct HomeView: View {
             }
         }
         .onAppear { setupViewModel() }
+        .onReceive(NotificationCenter.default.publisher(for: .focusComposer)) { _ in
+            isComposerFocused = true
+        }
         .sheet(isPresented: $showSpeechOverlay, onDismiss: { viewModel?.load() }) {
             SpeechOverlayView { transcript in
                 viewModel?.inputText = transcript
@@ -163,4 +169,8 @@ extension ParsedTransaction: Identifiable {
     HomeView()
         .environment(AppContainer())
         .modelContainer(PersistenceController.shared.container)
+}
+
+extension Notification.Name {
+    static let focusComposer = Notification.Name("focusComposer")
 }

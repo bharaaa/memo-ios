@@ -47,7 +47,9 @@ struct ContentView: View {
                 .tag(0)
 
             // Memories (all transactions)
-            TransactionListView()
+            TransactionListView(onGoToComposer: {
+                selectedTab = 0
+            })
                 .tabItem {
                     Label(L10n.tabMemories, systemImage: "brain")
                 }
