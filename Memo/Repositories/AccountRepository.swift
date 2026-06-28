@@ -19,69 +19,46 @@ final class AccountRepository: AccountRepositoryProtocol {
     
     // MARK: - Core Calculations
     
-    func currentBalance(for account: Account) -> Money {
+    func currentBalance(for account: Account) -> Decimal {
         return account.currentBalance
     }
     
-    func totalIncome(for account: Account) -> Money {
-        let amount = account.transactions
+    func totalIncome(for account: Account) -> Decimal {
+        account.transactions
             .filter { $0.transactionType == .income }
-            .reduce(Decimal(0)) { $0 + $1.originalMoneyAmount }
-        return Money(amount: amount, currencyCode: account.currencyCode)
+            .reduce(Decimal(0)) { $0 + $1.amount }
     }
     
-    func totalExpenses(for account: Account) -> Money {
-        let amount = account.transactions
+    func totalExpenses(for account: Account) -> Decimal {
+        account.transactions
             .filter { $0.transactionType == .expense }
-            .reduce(Decimal(0)) { $0 + $1.originalMoneyAmount }
-        return Money(amount: amount, currencyCode: account.currencyCode)
+            .reduce(Decimal(0)) { $0 + $1.amount }
     }
     
-    func transferIn(for account: Account) -> Money {
+    func transferIn(for account: Account) -> Decimal {
         // A transfer-in is an .income transaction that is linked to a transfer
-        let amount = account.transactions
+        account.transactions
             .filter { $0.transactionType == .income && $0.linkedTransferID != nil }
-            .reduce(Decimal(0)) { $0 + $1.originalMoneyAmount }
-        return Money(amount: amount, currencyCode: account.currencyCode)
+            .reduce(Decimal(0)) { $0 + $1.amount }
     }
     
-    func transferOut(for account: Account) -> Money {
+    func transferOut(for account: Account) -> Decimal {
         // A transfer-out is an .expense transaction that is linked to a transfer
-        let amount = account.transactions
+        account.transactions
             .filter { $0.transactionType == .expense && $0.linkedTransferID != nil }
-            .reduce(Decimal(0)) { $0 + $1.originalMoneyAmount }
-        return Money(amount: amount, currencyCode: account.currencyCode)
+            .reduce(Decimal(0)) { $0 + $1.amount }
     }
     
     func transactionCount(for account: Account) -> Int {
         return account.transactions.count
     }
     
-    func totalAssets(in currency: CurrencyCode) -> Money {
+    func totalAssets() -> Decimal {
         let descriptor = FetchDescriptor<Account>(
             predicate: #Predicate { $0.isArchived == false }
         )
         let accounts = (try? context.fetch(descriptor)) ?? []
-        
-        // Sum all converted transactions
-        var sum: Decimal = 0
-        for account in accounts {
-            // Note: openingBalance isn't auto-converted. In a true implementation, 
-            // we'd either convert it here dynamically, or sum only `convertedMoneyAmount` from transactions
-            // For now, we sum converted transactions.
-            let convertedIncome = account.transactions
-                .filter { $0.transactionType == .income }
-                .reduce(Decimal(0)) { $0 + $1.convertedMoneyAmount }
-            
-            let convertedExpense = account.transactions
-                .filter { $0.transactionType == .expense }
-                .reduce(Decimal(0)) { $0 + $1.convertedMoneyAmount }
-                
-            // HACK: for this example, we assume opening balance was converted or 1:1 if migration
-            sum += account.openingBalanceAmount + convertedIncome - convertedExpense
-        }
-        
-        return Money(amount: sum, currencyCode: currency)
+        return accounts.reduce(Decimal(0)) { $0 + $1.currentBalance }
     }
     
     func recentTransactions(for account: Account, limit: Int = 20) -> [Transaction] {

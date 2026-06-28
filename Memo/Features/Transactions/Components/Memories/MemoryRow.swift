@@ -59,7 +59,8 @@ struct MemoryRow: View {
             
             // Amount
             AmountText(
-                money: transaction.originalMoney,
+                amount: transaction.amount,
+                currencyCode: transaction.currencyCode,
                 transactionType: transaction.transactionType,
                 size: .small
             )

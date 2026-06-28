@@ -108,10 +108,8 @@ struct TransactionPreviewView: View {
                 isSaving: vm.isSaving,
                 onSave: {
                     vm.save { savedTransaction in
-                        if let tx = savedTransaction {
-                            onSaved?(tx)
-                            dismiss()
-                        }
+                        onSaved?(savedTransaction)
+                        dismiss()
                     }
                 }
             )
@@ -207,7 +205,7 @@ struct TransactionPreviewView: View {
                 transactionService: appContainer.transactionService,
                 categoryService: appContainer.categoryService,
                 modelContext: modelContext,
-                defaultCurrency: CurrencyCode(rawValue: appContainer.preferredCurrencyCode) ?? .idr
+                defaultCurrency: appContainer.preferredCurrencyCode
             )
         }
     }

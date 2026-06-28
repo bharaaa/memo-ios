@@ -31,7 +31,7 @@ final class TransferViewModel {
     }
     
     // MARK: - Actions
-    func save() async -> Bool {
+    func save() -> Bool {
         let amount = Decimal(string: amountString.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)) ?? 0
         guard amount > 0 else {
             errorMessage = "Please enter a valid amount."
@@ -54,8 +54,9 @@ final class TransferViewModel {
         errorMessage = nil
         
         do {
-            try await transactionService.createTransfer(
+            try transactionService.createTransfer(
                 amount: amount,
+                currencyCode: source.currencyCode,
                 from: source,
                 to: destination,
                 date: date,

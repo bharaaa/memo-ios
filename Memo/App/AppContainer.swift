@@ -47,10 +47,9 @@ final class AppContainer {
 
     // MARK: - Init
 
-    init(persistenceController: PersistenceController? = nil) {
-        let pc = persistenceController ?? PersistenceController.shared
-        self.persistenceController = pc
-        let context = pc.container.mainContext
+    init(persistenceController: PersistenceController = .shared) {
+        self.persistenceController = persistenceController
+        let context = persistenceController.container.mainContext
 
         let categoryRepo = CategoryRepository(context: context)
         let transactionRepo = TransactionRepository(context: context)
@@ -65,9 +64,7 @@ final class AppContainer {
             repository: transactionRepo,
             accountRepository: accountRepo,
             categoryService: self.categoryService,
-            context: context,
-            conversionEngine: ConversionEngine(),
-            currencyService: CurrencyService.shared
+            context: context
         )
         self.memoService         = MemoService()
         self.ocrService          = OCRService()

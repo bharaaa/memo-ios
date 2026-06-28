@@ -16,7 +16,7 @@ struct ConversationComposer: View {
     let onScan: () -> Void
     let onSpeak: () -> Void
     
-    var isFocused: FocusState<Bool>.Binding
+    @FocusState private var isFocused: Bool
     
     // Auto-rotate placeholders for inspiration
     @State private var placeholderIndex = 0
@@ -30,7 +30,7 @@ struct ConversationComposer: View {
     ]
     
     var isExpanded: Bool {
-        isFocused.wrappedValue || !text.isEmpty || isProcessing
+        isFocused || !text.isEmpty || isProcessing
     }
     
     var body: some View {
@@ -46,7 +46,7 @@ struct ConversationComposer: View {
                         .padding(.top, isExpanded ? 4 : 0)
                     
                     ZStack(alignment: isExpanded ? .topLeading : .leading) {
-                        if text.isEmpty && !isFocused.wrappedValue {
+                        if text.isEmpty && !isFocused {
                             Text(placeholders[placeholderIndex])
                                 .font(.body)
                                 .foregroundStyle(Color(UIColor.quaternaryLabel))
@@ -57,7 +57,7 @@ struct ConversationComposer: View {
                         TextField("", text: $text, axis: .vertical)
                             .font(.body)
                             .foregroundStyle(Color.primary)
-                            .focused(isFocused)
+                            .focused($isFocused)
                             .padding(.top, isExpanded ? 4 : 0)
                             .lineLimit(isExpanded ? 1...6 : 1...1)
                     }
@@ -100,27 +100,26 @@ struct ConversationComposer: View {
                             } else {
                                 Image(systemName: "arrow.up.circle.fill")
                                     .font(.system(size: 32))
-                                    .foregroundStyle(text.isEmpty ? Color.memoPrimary.opacity(0.5) : Color.white)
-                                    .background(
-                                        Circle().fill(text.isEmpty ? Color.gray.opacity(0.2) : Color.memoPrimary)
-                                    )
+                                    .foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color(UIColor.quaternaryLabel) : Color.memoPrimary)
                             }
                         }
-                        .disabled(text.isEmpty)
+                        .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing)
+                        .animation(.easeInOut(duration: 0.2), value: text.isEmpty)
                     }
                     .padding(.horizontal, 16)
-                    .padding(.vertical, isExpanded ? 16 : 14)
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
             .background(Color(UIColor.secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(isFocused.wrappedValue ? Color.memoPrimary.opacity(0.5) : Color.clear, lineWidth: 1)
+                    .stroke(isFocused ? Color.memoPrimary : Color(UIColor.separator).opacity(0.5), lineWidth: isFocused ? 1.5 : 0.5)
             )
             .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isExpanded)
-            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isFocused.wrappedValue)
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isFocused)
             .memoScreenPadding()
         }
         .onAppear {

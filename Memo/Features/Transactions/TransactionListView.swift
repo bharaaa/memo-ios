@@ -13,10 +13,8 @@ struct TransactionListView: View {
 
     @Environment(AppContainer.self) private var appContainer
     @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
-    
-    var onGoToComposer: (() -> Void)? = nil
-    @Environment(\.dismiss) private var dismiss
 
+    @State private var showChat = false
     @State private var showEditSheet = false
     @State private var transactionToEdit: Transaction?
     
@@ -64,17 +62,7 @@ struct TransactionListView: View {
         NavigationStack {
             Group {
                 if transactions.isEmpty {
-                    EmptyMemoriesView {
-                        if let action = onGoToComposer {
-                            action()
-                        } else {
-                            dismiss()
-                        }
-                        
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            NotificationCenter.default.post(name: .focusComposer, object: nil)
-                        }
-                    }
+                    EmptyMemoriesView { showChat = true }
                 } else if filtered.isEmpty {
                     // Filtered empty state
                     VStack(spacing: 8) {
@@ -108,17 +96,13 @@ struct TransactionListView: View {
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                         Button(role: .destructive) {
-                                            Task {
-                                                try? await appContainer.transactionService.delete(transaction)
-                                            }
+                                            try? appContainer.transactionService.delete(transaction)
                                         } label: {
                                             Label("Delete", systemImage: "trash")
                                         }
                                         
                                         Button {
-                                            Task {
-                                                try? await appContainer.transactionService.duplicate(transaction)
-                                            }
+                                            try? appContainer.transactionService.duplicate(transaction)
                                         } label: {
                                             Label("Duplicate", systemImage: "doc.on.doc")
                                         }
@@ -155,6 +139,9 @@ struct TransactionListView: View {
             .navigationDestination(for: Transaction.self) { transaction in
                 TransactionDetailView(transaction: transaction)
             }
+        }
+        .sheet(isPresented: $showChat) {
+            ChatView().environment(appContainer)
         }
         .sheet(item: $transactionToEdit) { transaction in
             TransactionEditView(transaction: transaction)

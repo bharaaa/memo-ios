@@ -89,10 +89,8 @@ struct TransferView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
-                        Task {
-                            if await viewModel.save() {
-                                dismiss()
-                            }
+                        if viewModel.save() {
+                            dismiss()
                         }
                     }
                     .fontWeight(.semibold)

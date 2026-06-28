@@ -13,7 +13,7 @@ struct AccountPreviewCard: View {
     let name: String
     let icon: String
     let colorHex: String
-    let currencyCode: CurrencyCode
+    let currencyCode: String
     let balanceString: String
     let accountType: AccountType
     
@@ -55,7 +55,8 @@ struct AccountPreviewCard: View {
                 .foregroundStyle(.white.opacity(0.9))
             
             AmountText(
-                money: Money(amount: balanceValue, currencyCode: currencyCode),
+                amount: balanceValue,
+                currencyCode: currencyCode,
                 transactionType: balanceValue < 0 ? .expense : .income,
                 size: .large,
                 showSign: false
@@ -80,7 +81,7 @@ struct AccountPreviewCard: View {
 struct AccountInformationSection: View {
     @Binding var name: String
     @Binding var accountType: AccountType
-    let currencyCode: CurrencyCode
+    let currencyCode: String
     let onCurrencyTap: () -> Void
     @Binding var openingBalanceString: String
     
@@ -106,7 +107,7 @@ struct AccountInformationSection: View {
             
             // Currency
             AccountEditableRow(title: "Currency", icon: "dollarsign.circle", iconColor: .green, action: onCurrencyTap) {
-                Text(currencyCode.rawValue)
+                Text(currencyCode)
             }
             
             // Balance
@@ -151,11 +152,12 @@ struct AccountAppearanceSection: View {
 struct AccountMetadataSection: View {
     @Binding var isArchived: Bool
     
-    let totalIncome: Money
-    let totalExpense: Money
-    let transferIn: Money
-    let transferOut: Money
+    let totalIncome: Decimal
+    let totalExpenses: Decimal
+    let transferIn: Decimal
+    let transferOut: Decimal
     let transactionCount: Int
+    let currencyCode: String
     
     var body: some View {
         VStack(spacing: 0) {
@@ -165,16 +167,10 @@ struct AccountMetadataSection: View {
                     .tint(.memoPrimary)
             }
             
-            summaryRow(title: "Income", icon: "arrow.down.left", iconColor: .green, money: totalIncome)
-            summaryRow(title: "Expenses", icon: "arrow.up.right", iconColor: .red, money: totalExpense)
-            
-            if transferIn.amount > 0 || transferOut.amount > 0 {
-                Divider()
-                    .padding(.leading, 44)
-                
-                summaryRow(title: "Transfers In", icon: "arrow.right.to.line", iconColor: .blue, money: transferIn)
-                summaryRow(title: "Transfers Out", icon: "arrow.left.from.line", iconColor: .orange, money: transferOut)
-            }
+            summaryRow(title: "Total Income", icon: "arrow.down.left", iconColor: .memoIncome, amount: totalIncome)
+            summaryRow(title: "Total Expenses", icon: "arrow.up.right", iconColor: .memoExpense, amount: totalExpenses)
+            summaryRow(title: "Transfer In", icon: "arrow.left.arrow.right", iconColor: .memoPrimary, amount: transferIn)
+            summaryRow(title: "Transfer Out", icon: "arrow.right.arrow.left", iconColor: .memoPrimary, amount: transferOut)
             
             AccountEditableRow(title: "Transactions", icon: "list.bullet", iconColor: .black, isLast: true) {
                 Text("\(transactionCount)")
@@ -183,11 +179,12 @@ struct AccountMetadataSection: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
     
-    private func summaryRow(title: String, icon: String, iconColor: Color, money: Money) -> some View {
+    private func summaryRow(title: String, icon: String, iconColor: Color, amount: Decimal) -> some View {
         AccountEditableRow(title: title, icon: icon, iconColor: iconColor) {
             AmountText(
-                money: money,
-                transactionType: money.amount < 0 ? .expense : .income,
+                amount: amount,
+                currencyCode: currencyCode,
+                transactionType: amount < 0 ? .expense : .income,
                 size: .small,
                 showSign: false
             )

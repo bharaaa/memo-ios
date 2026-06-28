@@ -17,7 +17,7 @@ struct AccountDetailView: View {
     @State private var viewModel: AccountFormViewModel?
     private let accountToEdit: Account?
     
-    init(account: Account? = nil, context: ModelContext) {
+    init(account: Account? = nil, context: ModelContext, defaultCurrency: String) {
         self.accountToEdit = account
     }
     
@@ -34,7 +34,7 @@ struct AccountDetailView: View {
                 viewModel = AccountFormViewModel(
                     account: accountToEdit,
                     modelContext: modelContext,
-                    defaultCurrency: CurrencyCode(rawValue: appContainer.preferredCurrencyCode) ?? .idr
+                    defaultCurrency: appContainer.preferredCurrencyCode
                 )
             }
         }
@@ -82,10 +82,11 @@ struct AccountDetailView: View {
                     AccountMetadataSection(
                         isArchived: $viewModel.isArchived,
                         totalIncome: appContainer.accountRepository.totalIncome(for: account),
-                        totalExpense: appContainer.accountRepository.totalExpenses(for: account),
+                        totalExpenses: appContainer.accountRepository.totalExpenses(for: account),
                         transferIn: appContainer.accountRepository.transferIn(for: account),
                         transferOut: appContainer.accountRepository.transferOut(for: account),
-                        transactionCount: appContainer.accountRepository.transactionCount(for: account)
+                        transactionCount: appContainer.accountRepository.transactionCount(for: account),
+                        currencyCode: account.currencyCode
                     )
                     .padding(.horizontal, 16)
                     
@@ -147,11 +148,7 @@ struct AccountDetailView: View {
         }
         .sheet(isPresented: $viewModel.showCurrencyPicker) {
             NavigationStack {
-                let binding = Binding<String>(
-                    get: { viewModel.currencyCode.rawValue },
-                    set: { if let code = CurrencyCode(rawValue: $0) { viewModel.currencyCode = code } }
-                )
-                CurrencyPickerView(selected: binding)
+                CurrencyPickerView(selected: $viewModel.currencyCode)
                     .padding()
                     .navigationTitle("Select Currency")
                     .navigationBarTitleDisplayMode(.inline)

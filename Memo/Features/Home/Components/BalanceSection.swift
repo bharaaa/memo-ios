@@ -130,8 +130,9 @@ fileprivate struct WalletPassCard: View {
                     .foregroundStyle(Color.primary)
             } else {
                 AmountText(
-                    money: account.currentBalance,
-                    transactionType: account.currentBalance.amount < 0 ? .expense : .income,
+                    amount: account.currentBalance,
+                    currencyCode: account.currencyCode,
+                    transactionType: account.currentBalance < 0 ? .expense : .income,
                     size: .regular,
                     showSign: false
                 )

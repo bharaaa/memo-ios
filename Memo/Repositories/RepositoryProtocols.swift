@@ -10,13 +10,13 @@ import Foundation
 
 @MainActor
 protocol AccountRepositoryProtocol {
-    func currentBalance(for account: Account) -> Money
-    func totalIncome(for account: Account) -> Money
-    func totalExpenses(for account: Account) -> Money
-    func transferIn(for account: Account) -> Money
-    func transferOut(for account: Account) -> Money
+    func currentBalance(for account: Account) -> Decimal
+    func totalIncome(for account: Account) -> Decimal
+    func totalExpenses(for account: Account) -> Decimal
+    func transferIn(for account: Account) -> Decimal
+    func transferOut(for account: Account) -> Decimal
     func transactionCount(for account: Account) -> Int
-    func totalAssets(in currency: CurrencyCode) -> Money
+    func totalAssets() -> Decimal
     func recentTransactions(for account: Account, limit: Int) -> [Transaction]
     
     // Additional CRUD operations that should belong in the repository

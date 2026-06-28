@@ -16,7 +16,8 @@ struct AmountHeader: View {
     var body: some View {
         VStack(spacing: 8) {
             AmountText(
-                money: transaction.originalMoney,
+                amount: transaction.amount,
+                currencyCode: transaction.currencyCode,
                 transactionType: transaction.transactionType,
                 size: .large
             )

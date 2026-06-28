@@ -83,11 +83,6 @@ struct SettingsView: View {
             }
             .presentationDetents([.medium, .large])
         }
-        .onChange(of: preferredCurrency) { oldValue, newValue in
-            if let code = CurrencyCode(rawValue: newValue) {
-                CurrencyService.shared.baseCurrency = code
-            }
-        }
         .confirmationDialog(
             "Logout from Memo?",
             isPresented: $showLogoutConfirmation,

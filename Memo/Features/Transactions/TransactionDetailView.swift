@@ -70,20 +70,12 @@ struct TransactionDetailView: View {
     // MARK: - Actions
     
     private func deleteTransaction() {
-        Task {
-            try? await appContainer.transactionService.delete(transaction)
-            await MainActor.run {
-                dismiss()
-            }
-        }
+        try? appContainer.transactionService.delete(transaction)
+        dismiss()
     }
     
     private func duplicateTransaction() {
-        Task {
-            try? await appContainer.transactionService.duplicate(transaction)
-            await MainActor.run {
-                dismiss()
-            }
-        }
+        try? appContainer.transactionService.duplicate(transaction)
+        dismiss()
     }
 }

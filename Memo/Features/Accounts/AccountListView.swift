@@ -24,7 +24,8 @@ struct AccountListView: View {
                         Section {
                             AccountSummaryHeader(
                                 activeCount: vm.activeCount,
-                                totalBalance: vm.totalBalance
+                                totalBalance: vm.totalBalance,
+                                preferredCurrency: appContainer.preferredCurrencyCode
                             )
                         }
                         
@@ -148,13 +149,15 @@ struct AccountListView: View {
         .navigationDestination(for: Account.self) { account in
             AccountDetailView(
                 account: account,
-                context: modelContext
+                context: modelContext,
+                defaultCurrency: appContainer.preferredCurrencyCode
             )
         }
         .navigationDestination(for: String.self) { value in
             if value == "new_account" {
                 AccountDetailView(
-                    context: modelContext
+                    context: modelContext,
+                    defaultCurrency: appContainer.preferredCurrencyCode
                 )
             }
         }

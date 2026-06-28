@@ -21,7 +21,7 @@ final class TransactionPreviewViewModel {
     var transactionType: TransactionType
     var selectedAccount: Account?
     var selectedCategory: Category?
-    var currencyCode: CurrencyCode
+    var currencyCode: String
 
     // MARK: - State
 
@@ -56,28 +56,19 @@ final class TransactionPreviewViewModel {
         transactionService: TransactionService,
         categoryService: CategoryService,
         modelContext: ModelContext,
-        defaultCurrency: CurrencyCode
+        defaultCurrency: String
     ) {
         self.transactionService = transactionService
         self.categoryService = categoryService
         self.modelContext = modelContext
 
-        
-        let cCode = CurrencyCode(rawValue: parsed.currencyCode ?? "") ?? defaultCurrency
-        self.currencyCode = cCode
-        
-        if let amt = parsed.amount {
-            let m = Money(amount: amt, currencyCode: cCode)
-            self.amount = MoneyFormatter.format(m, locale: LanguageManager.shared.currentLocale, showSign: false)
-        } else {
-            self.amount = ""
-        }
-        
+        self.amount          = parsed.amount?.formatted(.currency(code: parsed.currencyCode ?? defaultCurrency).locale(LanguageManager.shared.currentLocale)) ?? ""
         self.merchantName    = parsed.merchantName ?? ""
         self.note            = parsed.note ?? ""
         self.date            = parsed.date ?? Date()
         self.paymentMethod   = parsed.paymentMethod ?? .cash
         self.transactionType = parsed.transactionType
+        self.currencyCode    = parsed.currencyCode ?? defaultCurrency
         self.confidence      = parsed.confidence
         self.providerName    = parsed.providerName
         self.status          = parsed.status
@@ -169,15 +160,19 @@ final class TransactionPreviewViewModel {
         userDidSelectPaymentMethod = true
     }
 
-    func save(completion: @escaping (Transaction?) -> Void) {
-        let amountDecimal = parseAmount() ?? Decimal(0)
+    @discardableResult
+    func save(completion: @escaping (Transaction?) -> Void) -> Transaction? {
+        guard let amountDecimal = parseAmount() else {
+            saveError = "Please enter a valid amount."
+            return nil
+        }
 
         isSaving = true
         saveError = nil
 
-        var parsed = ParsedTransaction(
+        let parsed = ParsedTransaction(
             amount: amountDecimal,
-            currencyCode: currencyCode.rawValue,
+            currencyCode: currencyCode,
             merchantName: merchantName.isEmpty ? nil : merchantName,
             note: note.isEmpty ? nil : note,
             date: date,
@@ -192,35 +187,31 @@ final class TransactionPreviewViewModel {
         // if we are still waiting for LLM results.
         let processing = (status == .parsing)
 
-        Task {
-            do {
-                let transaction = try await transactionService.save(
-                    parsed: parsed,
-                    account: selectedAccount
-                )
-                
-                // Apply user-selected category directly
-                if let cat = selectedCategory {
-                    transaction.category = cat
-                }
-                
-                if processing {
-                    transaction.isProcessing = true
-                }
-                
-                try await transactionService.update(transaction)
-                
-                await MainActor.run {
-                    isSaving = false
-                    completion(transaction)
-                }
-            } catch {
-                await MainActor.run {
-                    isSaving = false
-                    saveError = error.localizedDescription
-                    completion(nil)
-                }
+        do {
+            let transaction = try transactionService.save(
+                parsed: parsed,
+                account: selectedAccount,
+                preferredCurrency: currencyCode
+            )
+            
+            // Apply user-selected category directly
+            if let cat = selectedCategory {
+                transaction.category = cat
             }
+            
+            if processing {
+                transaction.isProcessing = true
+            }
+            
+            try transactionService.update(transaction)
+            
+            isSaving = false
+            completion(transaction)
+            return transaction
+        } catch {
+            isSaving = false
+            saveError = error.localizedDescription
+            return nil
         }
     }
 

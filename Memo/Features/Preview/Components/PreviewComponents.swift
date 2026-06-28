@@ -13,7 +13,7 @@ struct PreviewAmountHeader: View {
     @Environment(\.locale) private var locale
     @Binding var amount: String
     let transactionType: TransactionType
-    let currencyCode: CurrencyCode
+    let currencyCode: String
     @Binding var merchantName: String
     let category: Category?
     let date: Date

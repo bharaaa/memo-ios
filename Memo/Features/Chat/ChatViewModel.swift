@@ -165,12 +165,6 @@ final class ChatViewModel {
             didChange = true
         }
         
-        if tx.originalMoneyAmount == .zero, let amt = enriched.amount, amt > 0 {
-            tx.originalMoneyAmount = amt
-            tx.convertedMoneyAmount = amt // Rough fallback without API lookup, fine for late patch
-            didChange = true
-        }
-        
         if didChange {
             tx.isProcessing = false
             tx.updatedAt = Date()
@@ -184,10 +178,11 @@ final class ChatViewModel {
 
     // MARK: - Save from preview
 
-    func save(parsed: ParsedTransaction, account: Account?, currency: String) async throws -> Transaction {
-        try await transactionService.save(
+    func save(parsed: ParsedTransaction, account: Account?, currency: String) throws -> Transaction {
+        try transactionService.save(
             parsed: parsed,
-            account: account
+            account: account,
+            preferredCurrency: currency
         )
     }
 

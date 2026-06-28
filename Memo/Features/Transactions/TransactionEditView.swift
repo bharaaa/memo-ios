@@ -25,7 +25,7 @@ struct TransactionEditView: View {
     @State private var transactionType: TransactionType = .expense
     @State private var selectedAccount: Account?
     @State private var selectedCategory: Category?
-    @State private var currencyCode: CurrencyCode = .idr
+    @State private var currencyCode: String = "IDR"
     
     @State private var showAccountPicker = false
     @State private var showCategoryPicker = false
@@ -99,7 +99,7 @@ struct TransactionEditView: View {
             .frame(height: 50)
             .padding(.top, 20)
             
-            Text(currencyCode.rawValue)
+            Text(currencyCode)
                 .font(.memoCaption)
                 .foregroundStyle(.memoSecondaryText)
         }
@@ -180,7 +180,7 @@ struct TransactionEditView: View {
     // MARK: - Logic
     
     private func loadData() {
-        amountString = MoneyFormatter.format(transaction.originalMoney, locale: locale, showSign: false)
+        amountString = transaction.amount.formatted(.currency(code: transaction.currencyCode).locale(locale))
         merchantName = transaction.merchant?.name ?? ""
         note = transaction.note
         date = transaction.date
@@ -188,7 +188,7 @@ struct TransactionEditView: View {
         transactionType = transaction.transactionType
         selectedAccount = transaction.account
         selectedCategory = transaction.category
-        currencyCode = transaction.originalMoney.currencyCode
+        currencyCode = transaction.currencyCode
     }
     
     private func saveTransaction() {
@@ -207,7 +207,8 @@ struct TransactionEditView: View {
             return
         }
         
-        transaction.originalMoney = Money(amount: amountDecimal, currencyCode: currencyCode)
+        transaction.amount = amountDecimal
+        transaction.currencyCode = currencyCode
         transaction.note = note
         transaction.date = date
         transaction.paymentMethod = paymentMethod
@@ -233,13 +234,11 @@ struct TransactionEditView: View {
             }
         }
         
-        Task {
-            do {
-                try await appContainer.transactionService.update(transaction)
-                dismiss()
-            } catch {
-                errorMessage = "Failed to save: \(error.localizedDescription)"
-            }
+        do {
+            try appContainer.transactionService.update(transaction)
+            dismiss()
+        } catch {
+            errorMessage = "Failed to save: \(error.localizedDescription)"
         }
     }
     
