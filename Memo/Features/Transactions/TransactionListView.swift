@@ -136,17 +136,6 @@ struct TransactionListView: View {
             .navigationTitle("Memories")
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Search memories")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showChat = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.memoPrimary)
-                    }
-                }
-            }
             .navigationDestination(for: Transaction.self) { transaction in
                 TransactionDetailView(transaction: transaction)
             }
