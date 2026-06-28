@@ -2,7 +2,7 @@
 //  TransactionListView.swift
 //  Memo
 //
-//  Full transaction history, grouped by date.
+//  Full transaction history timeline, styled like Apple Journal.
 //  Accessible via the second tab in ContentView.
 //
 
@@ -17,16 +17,36 @@ struct TransactionListView: View {
     @State private var showChat = false
     @State private var showEditSheet = false
     @State private var transactionToEdit: Transaction?
+    
     @State private var searchText = ""
+    @State private var activeFilters: Set<MemoryFilter> = []
 
     private var filtered: [Transaction] {
-        guard !searchText.isEmpty else { return transactions }
-        let q = searchText.lowercased()
-        return transactions.filter {
-            $0.merchant?.name.lowercased().contains(q) == true ||
-            $0.note.lowercased().contains(q) ||
-            $0.category?.name.lowercased().contains(q) == true
+        var result = transactions
+        
+        // 1. Apply Search
+        if !searchText.isEmpty {
+            let q = searchText.lowercased()
+            result = result.filter {
+                $0.merchant?.name.lowercased().contains(q) == true ||
+                $0.note.lowercased().contains(q) ||
+                $0.category?.name.lowercased().contains(q) == true
+            }
         }
+        
+        // 2. Apply Quick Filters (Intersection: all active filters must pass)
+        if !activeFilters.isEmpty {
+            result = result.filter { tx in
+                for filter in activeFilters {
+                    if !filter.applies(to: tx) {
+                        return false
+                    }
+                }
+                return true
+            }
+        }
+        
+        return result
     }
 
     private var grouped: [(String, [Transaction])] {
@@ -42,44 +62,80 @@ struct TransactionListView: View {
         NavigationStack {
             Group {
                 if transactions.isEmpty {
-                    EmptyState(
-                        icon: "brain",
-                        title: "No memories yet",
-                        message: "Start by telling Memo about a purchase.",
-                        action: { showChat = true },
-                        actionLabel: "Add first memory"
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    EmptyMemoriesView { showChat = true }
+                } else if filtered.isEmpty {
+                    // Filtered empty state
+                    VStack(spacing: 8) {
+                        Spacer()
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 40))
+                            .foregroundStyle(Color.secondary)
+                        Text("No memories found")
+                            .font(.headline)
+                            .foregroundStyle(Color.primary)
+                        Spacer()
+                    }
                 } else {
                     List {
+                        FilterChipBar(activeFilters: $activeFilters)
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .padding(.bottom, 8)
+                            .padding(.top, 4)
+                            
                         ForEach(grouped, id: \.0) { (dateLabel, group) in
                             Section {
                                 ForEach(group) { transaction in
                                     NavigationLink(value: transaction) {
-                                        TransactionRowView(transaction: transaction)
+                                        MemoryRow(transaction: transaction)
+                                            .listRowInsets(EdgeInsets())
+                                    }
+                                    .alignmentGuide(.listRowSeparatorLeading) { _ in
+                                        64 // Align divider with text, skipping icon
                                     }
                                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                        deleteButton(transaction)
-                                        duplicateButton(transaction)
+                                        Button(role: .destructive) {
+                                            try? appContainer.transactionService.delete(transaction)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                        
+                                        Button {
+                                            try? appContainer.transactionService.duplicate(transaction)
+                                        } label: {
+                                            Label("Duplicate", systemImage: "doc.on.doc")
+                                        }
+                                        .tint(.memoSecondaryText)
                                     }
                                     .swipeActions(edge: .leading) {
-                                        editButton(transaction)
+                                        Button {
+                                            transactionToEdit = transaction
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        .tint(.memoPrimary)
                                     }
                                 }
                             } header: {
                                 Text(dateLabel)
-                                    .font(.memoCaption)
-                                    .foregroundStyle(.memoSecondaryText)
+                                    .font(.title3)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(Color.primary)
                                     .textCase(.none)
+                                    .padding(.top, 8)
+                                    .padding(.bottom, 4)
                             }
                         }
                     }
                     .listStyle(.insetGrouped)
-                    .searchable(text: $searchText, prompt: "Search transactions")
+                    .scrollContentBackground(.hidden)
                 }
             }
+            .background(Color.memoBackground)
             .navigationTitle("Memories")
             .navigationBarTitleDisplayMode(.large)
+            .searchable(text: $searchText, prompt: "Search memories")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -103,38 +159,4 @@ struct TransactionListView: View {
                 .environment(appContainer)
         }
     }
-
-    // MARK: - Actions
-
-    private func deleteButton(_ transaction: Transaction) -> some View {
-        Button(role: .destructive) {
-            try? appContainer.transactionService.delete(transaction)
-        } label: {
-            Label("Delete", systemImage: "trash")
-        }
-    }
-    
-    private func duplicateButton(_ transaction: Transaction) -> some View {
-        Button {
-            try? appContainer.transactionService.duplicate(transaction)
-        } label: {
-            Label("Duplicate", systemImage: "doc.on.doc")
-        }
-        .tint(.memoSecondaryText)
-    }
-    
-    private func editButton(_ transaction: Transaction) -> some View {
-        Button {
-            transactionToEdit = transaction
-        } label: {
-            Label("Edit", systemImage: "pencil")
-        }
-        .tint(.memoPrimary)
-    }
-}
-
-#Preview {
-    TransactionListView()
-        .environment(AppContainer())
-        .modelContainer(PersistenceController.shared.container)
 }

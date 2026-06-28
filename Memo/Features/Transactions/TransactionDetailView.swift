@@ -110,7 +110,7 @@ struct TransactionDetailView: View {
                     Button {
                         showEditSheet = true
                     } label: {
-                        Text("Edit Transaction")
+                        Text("Edit Memory")
                             .font(.memoHeadline)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -136,7 +136,7 @@ struct TransactionDetailView: View {
             }
         }
         .background(Color.memoBackground)
-        .navigationTitle("Details")
+        .navigationTitle("Memory Detail")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -153,7 +153,7 @@ struct TransactionDetailView: View {
                 .environment(appContainer)
         }
         .confirmationDialog(
-            "Delete Transaction?",
+            "Delete Memory?",
             isPresented: $showDeleteConfirmation,
             titleVisibility: .visible
         ) {
