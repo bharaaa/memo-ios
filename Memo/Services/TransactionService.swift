@@ -55,8 +55,8 @@ final class TransactionService {
     }
 
     func validate(_ parsed: ParsedTransaction) throws {
-        guard let amount = parsed.amount else { throw ValidationError.missingAmount }
-        guard amount > 0 else { throw ValidationError.negativeAmount }
+        // No longer enforcing strict validation at creation time
+        // so that transactions can be saved immediately while LLM runs.
     }
 
     // MARK: - Save from ParsedTransaction

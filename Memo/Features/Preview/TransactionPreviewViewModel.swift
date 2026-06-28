@@ -170,11 +170,7 @@ final class TransactionPreviewViewModel {
     }
 
     func save(completion: @escaping (Transaction?) -> Void) {
-        guard let amountDecimal = parseAmount() else {
-            saveError = "Please enter a valid amount."
-            completion(nil)
-            return
-        }
+        let amountDecimal = parseAmount() ?? Decimal(0)
 
         isSaving = true
         saveError = nil
