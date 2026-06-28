@@ -14,7 +14,7 @@ struct BalanceSection: View {
                 .foregroundStyle(.memoTertiaryText)
                 .textCase(.uppercase)
                 .tracking(0.8)
-                .padding(.horizontal, 24)
+                .memoScreenPadding()
             
             // Total Balance
             HStack {
@@ -32,7 +32,7 @@ struct BalanceSection: View {
                         .foregroundStyle(.memoTertiaryText)
                 }
             }
-            .padding(.horizontal, 24)
+            .memoScreenPadding()
             .padding(.bottom, 12)
             
             // Accounts Card
@@ -56,9 +56,8 @@ struct BalanceSection: View {
                 }
                 .buttonStyle(.plain)
             }
-            .background(Color.memoCard)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .padding(.horizontal, 24)
+            .memoCardStyle()
+            .memoScreenPadding()
         }
         .padding(.bottom, 24)
     }

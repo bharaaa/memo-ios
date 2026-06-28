@@ -96,14 +96,13 @@ struct ConversationComposer: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
             }
-            .background(Color.memoCard)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .memoCardStyle()
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(Color.memoPrimary.opacity(0.3), lineWidth: 1.5)
             )
             .shadow(color: Color.memoPrimary.opacity(0.05), radius: 10, x: 0, y: 4)
-            .padding(.horizontal, 24)
+            .memoScreenPadding()
             
             // Suggestion Chips
             ScrollView(.horizontal, showsIndicators: false) {
@@ -127,7 +126,7 @@ struct ConversationComposer: View {
                         }
                     }
                 }
-                .padding(.horizontal, 24)
+                .memoScreenPadding()
             }
         }
     }

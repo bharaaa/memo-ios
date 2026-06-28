@@ -23,7 +23,9 @@ final class AppContainer {
     let transactionService: TransactionService
     let categoryService: CategoryService
     let ocrService: OCRService
-    let accountRepository: AccountRepository
+    let accountRepository: AccountRepositoryProtocol
+    let transactionRepository: TransactionRepositoryProtocol
+    let categoryRepository: CategoryRepositoryProtocol
 
     // MARK: - Persistence
 
@@ -49,11 +51,23 @@ final class AppContainer {
         self.persistenceController = persistenceController
         let context = persistenceController.container.mainContext
 
+        let categoryRepo = CategoryRepository(context: context)
+        let transactionRepo = TransactionRepository(context: context)
+        let accountRepo = AccountRepository(context: context)
+        
+        self.categoryRepository  = categoryRepo
+        self.transactionRepository = transactionRepo
+        self.accountRepository   = accountRepo
+        
+        self.categoryService     = CategoryService(repository: categoryRepo, context: context)
+        self.transactionService  = TransactionService(
+            repository: transactionRepo,
+            accountRepository: accountRepo,
+            categoryService: self.categoryService,
+            context: context
+        )
         self.memoService         = MemoService()
-        self.transactionService  = TransactionService(context: context)
-        self.categoryService     = CategoryService(context: context)
         self.ocrService          = OCRService()
-        self.accountRepository   = AccountRepository(context: context)
     }
 
     // MARK: - Onboarding Completion

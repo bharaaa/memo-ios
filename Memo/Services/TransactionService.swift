@@ -13,12 +13,16 @@ import SwiftData
 @MainActor
 final class TransactionService {
 
-    private let context: ModelContext
+    private let repository: TransactionRepositoryProtocol
+    private let accountRepository: AccountRepositoryProtocol
     private let categoryService: CategoryService
+    private let context: ModelContext
 
-    init(context: ModelContext) {
+    init(repository: TransactionRepositoryProtocol, accountRepository: AccountRepositoryProtocol, categoryService: CategoryService, context: ModelContext) {
+        self.repository = repository
+        self.accountRepository = accountRepository
+        self.categoryService = categoryService
         self.context = context
-        self.categoryService = CategoryService(context: context)
     }
 
     // MARK: - Validation
@@ -66,7 +70,7 @@ final class TransactionService {
         } else if let hint = parsed.accountHint, let hintedAcc = fetchAccount(hint: hint) {
             resolvedAccount = hintedAcc
         } else {
-            resolvedAccount = fetchDefaultAccount()
+            resolvedAccount = accountRepository.defaultAccount()
         }
         
         guard let finalAccount = resolvedAccount else {
@@ -100,8 +104,7 @@ final class TransactionService {
             )
         }
 
-        context.insert(transaction)
-        try context.save()
+        try repository.save(transaction)
 
         return transaction
     }
@@ -112,15 +115,13 @@ final class TransactionService {
     func save(_ transaction: Transaction) throws {
         guard transaction.account != nil else { throw ValidationError.missingAccount }
         transaction.updatedAt = Date()
-        context.insert(transaction)
-        try context.save()
+        try repository.save(transaction)
     }
 
     // MARK: - Delete
 
     func delete(_ transaction: Transaction) throws {
-        context.delete(transaction)
-        try context.save()
+        try repository.delete(transaction)
     }
 
     // MARK: - Transfer
@@ -178,7 +179,7 @@ final class TransactionService {
         context.insert(credit)
         transfer.creditTransaction = credit
 
-        try context.save()
+        try repository.saveTransfer(transfer: transfer, debit: debit, credit: credit)
         return transfer
     }
     
@@ -201,8 +202,7 @@ final class TransactionService {
         newTransaction.category = transaction.category
         newTransaction.merchant = transaction.merchant
         
-        context.insert(newTransaction)
-        try context.save()
+        try repository.save(newTransaction)
         
         return newTransaction
     }
@@ -212,48 +212,10 @@ final class TransactionService {
     func update(_ transaction: Transaction) throws {
         guard transaction.account != nil else { throw ValidationError.missingAccount }
         transaction.updatedAt = Date()
-        try context.save()
+        try repository.save(transaction)
     }
 
-    // MARK: - Queries
 
-    func todaysTransactions() -> [Transaction] {
-        let start = Date().startOfDay
-        let descriptor = FetchDescriptor<Transaction>(
-            predicate: #Predicate { $0.date >= start },
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
-        )
-        return (try? context.fetch(descriptor)) ?? []
-    }
-
-    func recentTransactions(limit: Int = 20) -> [Transaction] {
-        var descriptor = FetchDescriptor<Transaction>(
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
-        )
-        descriptor.fetchLimit = limit
-        return (try? context.fetch(descriptor)) ?? []
-    }
-    
-    func currentMonthTransactions() -> [Transaction] {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month], from: Date())
-        guard let startOfMonth = calendar.date(from: components) else { return [] }
-        
-        let descriptor = FetchDescriptor<Transaction>(
-            predicate: #Predicate { $0.date >= startOfMonth },
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
-        )
-        return (try? context.fetch(descriptor)) ?? []
-    }
-
-    // MARK: - Helpers
-
-    private func fetchDefaultAccount() -> Account? {
-        let descriptor = FetchDescriptor<Account>(
-            predicate: #Predicate { $0.isDefault == true && $0.isArchived == false }
-        )
-        return try? context.fetch(descriptor).first
-    }
     
     private func fetchAccount(hint: String) -> Account? {
         let normalised = hint.lowercased().trimmingCharacters(in: .whitespaces)

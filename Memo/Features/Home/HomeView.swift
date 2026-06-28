@@ -13,8 +13,6 @@ struct HomeView: View {
     @Environment(AppContainer.self) private var appContainer
     @Environment(\.modelContext) private var modelContext
 
-    @Query(filter: #Predicate<Account> { $0.isArchived == false }, sort: \Account.sortOrder) private var accounts: [Account]
-
     @State private var viewModel: HomeViewModel?
     @State private var showSpeechOverlay = false
     @State private var showScan = false
@@ -59,7 +57,7 @@ struct HomeView: View {
                             
                             BalanceSection(
                                 totalAssets: vm.formattedTotalAssets,
-                                accounts: accounts
+                                accounts: vm.accounts
                             )
                             
                             RecentMemoriesSection(
@@ -141,7 +139,7 @@ struct HomeView: View {
     private func setupViewModel() {
         if viewModel == nil {
             viewModel = HomeViewModel(
-                transactionService: appContainer.transactionService,
+                transactionRepository: appContainer.transactionRepository,
                 accountRepository: appContainer.accountRepository,
                 memoService: appContainer.memoService,
                 currency: appContainer.preferredCurrencyCode,

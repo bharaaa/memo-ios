@@ -15,10 +15,7 @@ extension Decimal {
     /// e.g. Decimal(45000).formatted(currency: "IDR") → "Rp 45.000"
     ///      Decimal(12.50).formatted(currency: "USD") → "$12.50"
     func formatted(currency currencyCode: String) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currencyCode
-        formatter.maximumFractionDigits = currencyCode == "IDR" || currencyCode == "JPY" ? 0 : 2
+        let formatter = Formatters.shared.currencyFormatter(for: currencyCode)
         return formatter.string(from: self as NSDecimalNumber) ?? "\(currencyCode) \(self)"
     }
 
@@ -60,8 +57,7 @@ extension Decimal {
         }
 
         // Standard decimal — try locale-aware parsing first
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
+        let formatter = Formatters.shared.decimalParser
         if let n = formatter.number(from: cleaned) {
             return Decimal(string: n.stringValue)
         }

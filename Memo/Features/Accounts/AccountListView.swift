@@ -12,61 +12,71 @@ struct AccountListView: View {
     @Environment(AppContainer.self) private var appContainer
     @Environment(\.modelContext) private var modelContext
     
-    @Query(sort: \Account.sortOrder) private var accounts: [Account]
+    @State private var viewModel: AccountListViewModel?
     
     var body: some View {
-        List {
-            ForEach(accounts) { account in
-                NavigationLink(value: account) {
-                    HStack(spacing: 16) {
-                        // Icon
-                        ZStack {
-                            Circle()
-                                .fill(Color(hex: account.colorHex).opacity(0.15))
-                                .frame(width: 40, height: 40)
-                            Image(systemName: account.icon)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(Color(hex: account.colorHex))
-                        }
-                        
-                        // Name and Type
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(account.name)
-                                .font(.memoBody)
-                                .foregroundStyle(.memoPrimaryText)
-                            
-                            HStack {
-                                Text(account.accountType.displayName)
-                                if account.isDefault {
-                                    Text("· Default")
+        Group {
+            if let vm = viewModel {
+                List {
+                    ForEach(vm.accounts) { account in
+                        NavigationLink(value: account) {
+                            HStack(spacing: 16) {
+                                // Icon
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(hex: account.colorHex).opacity(0.15))
+                                        .frame(width: 40, height: 40)
+                                    Image(systemName: account.icon)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(Color(hex: account.colorHex))
                                 }
-                                if account.isArchived {
-                                    Text("· Archived")
+                                
+                                // Name and Type
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(account.name)
+                                        .font(.memoBody)
+                                        .foregroundStyle(.memoPrimaryText)
+                                    
+                                    HStack {
+                                        Text(account.accountType.displayName)
+                                        if account.isDefault {
+                                            Text("· Default")
+                                        }
+                                        if account.isArchived {
+                                            Text("· Archived")
+                                        }
+                                    }
+                                    .font(.memoCaption)
+                                    .foregroundStyle(.memoSecondaryText)
                                 }
+                                
+                                Spacer()
+                                
+                                // Balance
+                                AmountText(
+                                    amount: account.currentBalance,
+                                    currencyCode: account.currencyCode,
+                                    transactionType: account.currentBalance < 0 ? .expense : .income,
+                                    size: .small,
+                                    showSign: false
+                                )
                             }
-                            .font(.memoCaption)
-                            .foregroundStyle(.memoSecondaryText)
+                            .padding(.vertical, 4)
                         }
-                        
-                        Spacer()
-                        
-                        // Balance
-                        AmountText(
-                            amount: account.currentBalance,
-                            currencyCode: account.currencyCode,
-                            transactionType: account.currentBalance < 0 ? .expense : .income,
-                            size: .small,
-                            showSign: false
-                        )
+                        .opacity(account.isArchived ? 0.6 : 1.0)
                     }
-                    .padding(.vertical, 4)
+                    .onMove { source, destination in
+                        vm.moveAccounts(from: source, to: destination)
+                    }
+                    .onDelete { offsets in
+                        vm.deleteAccounts(at: offsets)
+                    }
                 }
-                .opacity(account.isArchived ? 0.6 : 1.0)
+                .listStyle(.insetGrouped)
+            } else {
+                ProgressView()
             }
-            .onMove(perform: moveAccounts)
-            .onDelete(perform: deleteAccounts)
         }
-        .listStyle(.insetGrouped)
         .navigationTitle("Accounts")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -94,26 +104,12 @@ struct AccountListView: View {
                 )
             }
         }
-    }
-    
-    // MARK: - Actions
-    
-    private func moveAccounts(from source: IndexSet, to destination: Int) {
-        var orderedAccounts = accounts
-        orderedAccounts.move(fromOffsets: source, toOffset: destination)
-        
-        for (index, account) in orderedAccounts.enumerated() {
-            account.sortOrder = index
+        .onAppear {
+            if viewModel == nil {
+                viewModel = AccountListViewModel(repository: appContainer.accountRepository)
+            }
+            viewModel?.load()
         }
-        
-        try? modelContext.save()
-    }
-    
-    private func deleteAccounts(at offsets: IndexSet) {
-        for index in offsets {
-            modelContext.delete(accounts[index])
-        }
-        try? modelContext.save()
     }
 }
 

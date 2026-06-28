@@ -10,7 +10,7 @@ import Foundation
 import SwiftData
 
 @MainActor
-final class AccountRepository {
+final class AccountRepository: AccountRepositoryProtocol {
     private let context: ModelContext
     
     init(context: ModelContext) {
@@ -67,5 +67,43 @@ final class AccountRepository {
                 .sorted(by: { $0.date > $1.date })
                 .prefix(limit)
         )
+    }
+    
+    // MARK: - CRUD
+    
+    func allAccounts() -> [Account] {
+        let descriptor = FetchDescriptor<Account>(
+            predicate: #Predicate { $0.isArchived == false },
+            sortBy: [SortDescriptor(\.sortOrder)]
+        )
+        return (try? context.fetch(descriptor)) ?? []
+    }
+    
+    func defaultAccount() -> Account? {
+        let descriptor = FetchDescriptor<Account>(
+            predicate: #Predicate { $0.isDefault == true && $0.isArchived == false }
+        )
+        return try? context.fetch(descriptor).first
+    }
+    
+    func account(byName name: String) -> Account? {
+        let normalised = name.lowercased().trimmingCharacters(in: .whitespaces)
+        let descriptor = FetchDescriptor<Account>(
+            predicate: #Predicate { $0.isArchived == false }
+        )
+        if let accounts = try? context.fetch(descriptor) {
+            return accounts.first { $0.name.lowercased() == normalised }
+        }
+        return nil
+    }
+    
+    func save(_ account: Account) throws {
+        context.insert(account)
+        try context.save()
+    }
+    
+    func delete(_ account: Account) throws {
+        context.delete(account)
+        try context.save()
     }
 }

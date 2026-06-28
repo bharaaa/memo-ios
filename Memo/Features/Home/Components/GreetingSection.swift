@@ -14,7 +14,7 @@ struct GreetingSection: View {
                 .foregroundStyle(.memoSecondaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 24)
+        .memoScreenPadding()
         .padding(.top, 24)
         .padding(.bottom, 24)
     }

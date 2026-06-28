@@ -19,7 +19,7 @@ struct RecentMemoriesSection: View {
                         .foregroundStyle(.memoPrimary)
                 }
             }
-            .padding(.horizontal, 24)
+            .memoScreenPadding()
             
             if transactions.isEmpty {
                 EmptyState(
@@ -44,9 +44,8 @@ struct RecentMemoriesSection: View {
                         }
                     }
                 }
-                .background(Color.memoCard)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.horizontal, 24)
+                .memoCardStyle()
+                .memoScreenPadding()
             }
         }
         .padding(.top, 16)

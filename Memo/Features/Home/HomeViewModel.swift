@@ -22,11 +22,14 @@ final class HomeViewModel {
     var isProcessing: Bool = false
     var parsedTransaction: ParsedTransaction?
     var parseError: String?
+    
+    // Accounts State
+    var accounts: [Account] = []
 
     // MARK: - Dependencies
 
-    private let transactionService: TransactionService
-    private let accountRepository: AccountRepository
+    private let transactionRepository: TransactionRepositoryProtocol
+    private let accountRepository: AccountRepositoryProtocol
     private let memoService: MemoService
     private let currency: String
     private let userName: String
@@ -34,13 +37,13 @@ final class HomeViewModel {
     // MARK: - Init
 
     init(
-        transactionService: TransactionService,
-        accountRepository: AccountRepository,
+        transactionRepository: TransactionRepositoryProtocol,
+        accountRepository: AccountRepositoryProtocol,
         memoService: MemoService,
         currency: String,
         userName: String
     ) {
-        self.transactionService = transactionService
+        self.transactionRepository = transactionRepository
         self.accountRepository = accountRepository
         self.memoService = memoService
         self.currency = currency
@@ -50,8 +53,9 @@ final class HomeViewModel {
     // MARK: - Load
 
     func load() {
-        recentTransactions = transactionService.recentTransactions(limit: 5)
+        recentTransactions = transactionRepository.recentTransactions(limit: 5)
         totalAssets = accountRepository.totalAssets()
+        accounts = accountRepository.allAccounts()
         greeting = buildGreeting()
     }
 

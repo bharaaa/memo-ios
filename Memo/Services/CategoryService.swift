@@ -13,9 +13,11 @@ import SwiftData
 @MainActor
 final class CategoryService {
 
+    private let repository: CategoryRepositoryProtocol
     private let context: ModelContext
 
-    init(context: ModelContext) {
+    init(repository: CategoryRepositoryProtocol, context: ModelContext) {
+        self.repository = repository
         self.context = context
     }
 
@@ -94,27 +96,21 @@ final class CategoryService {
     // MARK: - DB Fetch
 
     private func fetchCategory(named name: String) -> Category? {
-        let descriptor = FetchDescriptor<Category>(
-            predicate: #Predicate { $0.name == name }
-        )
-        return try? context.fetch(descriptor).first
+        return repository.category(byName: name)
     }
 
     private func fetchCategory(containing keyword: String) -> Category? {
-        let descriptor = FetchDescriptor<Category>()
-        let all = (try? context.fetch(descriptor)) ?? []
+        let all = repository.allCategories(type: .expense) + repository.allCategories(type: .income)
         return all.first { $0.name.lowercased().contains(keyword) }
     }
 
     // MARK: - All Categories
 
     func allCategories(type: CategoryType? = nil) -> [Category] {
-        var descriptor = FetchDescriptor<Category>(
-            sortBy: [SortDescriptor(\.sortOrder)]
-        )
+        let all = repository.allCategories(type: .expense) + repository.allCategories(type: .income)
         if let type {
-            descriptor.predicate = #Predicate { $0.categoryType == type }
+            return all.filter { $0.categoryType == type }
         }
-        return (try? context.fetch(descriptor)) ?? []
+        return all
     }
 }

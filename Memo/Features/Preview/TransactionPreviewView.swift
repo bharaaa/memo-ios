@@ -76,138 +76,17 @@ struct TransactionPreviewView: View {
                 amountSection(vm: vm)
 
                 // Form fields
-                VStack(spacing: 0) {
-                    // Type toggle
-                    formRow {
-                        HStack {
-                            Label("Type", systemImage: "arrow.up.arrow.down.circle")
-                                .foregroundStyle(.memoSecondaryText)
-                                .font(.memoBody)
-                            Spacer()
-                            Picker("Type", selection: Binding(
-                                get: { vm.transactionType },
-                                set: { vm.transactionType = $0 }
-                            )) {
-                                ForEach(TransactionType.allCases, id: \.self) { t in
-                                    Text(t.displayName).tag(t)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                            .frame(maxWidth: 200)
-                        }
-                    }
-                    divider
-
-                    // Merchant
-                    formRow {
-                        HStack {
-                            Label("Merchant", systemImage: "storefront")
-                                .foregroundStyle(.memoSecondaryText)
-                                .font(.memoBody)
-                            Spacer()
-                            TextField("e.g. Grab", text: Binding(
-                                get: { vm.merchantName },
-                                set: { vm.merchantName = $0 }
-                            ))
-                            .multilineTextAlignment(.trailing)
-                            .font(.memoBody)
-                        }
-                    }
-                    divider
-
-                    // Category
-                    formRow {
-                        HStack {
-                            Label("Category", systemImage: "tag")
-                                .foregroundStyle(.memoSecondaryText)
-                                .font(.memoBody)
-                            Spacer()
-                            if let cat = vm.selectedCategory {
-                                CategoryBadge(category: cat, style: .filled)
-                            } else {
-                                Text("None")
-                                    .font(.memoBody)
-                                    .foregroundStyle(.memoTertiaryText)
-                            }
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.memoTertiaryText)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture { vm.showCategoryPicker = true }
-                    }
-                    divider
-
-                    // Account
-                    formRow {
-                        HStack {
-                            Label("Account", systemImage: "creditcard")
-                                .foregroundStyle(.memoSecondaryText)
-                                .font(.memoBody)
-                            Spacer()
-                            Text(vm.selectedAccount?.name ?? "Cash")
-                                .font(.memoBody)
-                                .foregroundStyle(.memoPrimaryText)
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.memoTertiaryText)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture { vm.showAccountPicker = true }
-                    }
-                    divider
-
-                    // Date
-                    formRow {
-                        DatePicker(
-                            "Date",
-                            selection: Binding(
-                                get: { vm.date },
-                                set: { vm.date = $0 }
-                            ),
-                            displayedComponents: [.date, .hourAndMinute]
-                        )
-                        .font(.memoBody)
-                    }
-                    divider
-
-                    // Payment method
-                    formRow {
-                        HStack {
-                            Label("Payment", systemImage: "banknote")
-                                .foregroundStyle(.memoSecondaryText)
-                                .font(.memoBody)
-                            Spacer()
-                            Picker("Payment", selection: Binding(
-                                get: { vm.paymentMethod },
-                                set: { vm.paymentMethod = $0 }
-                            )) {
-                                ForEach(PaymentMethod.allCases, id: \.self) { m in
-                                    Text(m.displayName).tag(m)
-                                }
-                            }
-                        }
-                    }
-                    divider
-
-                    // Note
-                    formRow {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Label("Note", systemImage: "text.alignleft")
-                                .foregroundStyle(.memoSecondaryText)
-                                .font(.memoBody)
-                            TextField("Optional note", text: Binding(
-                                get: { vm.note },
-                                set: { vm.note = $0 }
-                            ), axis: .vertical)
-                            .font(.memoBody)
-                            .lineLimit(1...4)
-                        }
-                    }
-                }
-                .background(Color.memoCard)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.horizontal, 20)
+                TransactionForm(
+                    transactionType: Binding(get: { vm.transactionType }, set: { vm.transactionType = $0 }),
+                    merchantName: Binding(get: { vm.merchantName }, set: { vm.merchantName = $0 }),
+                    selectedCategory: Binding(get: { vm.selectedCategory }, set: { vm.selectedCategory = $0 }),
+                    selectedAccount: Binding(get: { vm.selectedAccount }, set: { vm.selectedAccount = $0 }),
+                    date: Binding(get: { vm.date }, set: { vm.date = $0 }),
+                    paymentMethod: Binding(get: { vm.paymentMethod }, set: { vm.paymentMethod = $0 }),
+                    note: Binding(get: { vm.note }, set: { vm.note = $0 }),
+                    onCategoryTap: { vm.showCategoryPicker = true },
+                    onAccountTap: { vm.showAccountPicker = true }
+                )
 
                 // Confidence badge
                 confidenceBadge(vm: vm)
@@ -251,17 +130,7 @@ struct TransactionPreviewView: View {
         }
     }
 
-    // MARK: - Form Helpers
 
-    private func formRow<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        content()
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-    }
-
-    private var divider: some View {
-        Divider().padding(.leading, 16)
-    }
 
     // MARK: - Category Picker Sheet
 
