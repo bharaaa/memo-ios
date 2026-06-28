@@ -2,7 +2,7 @@
 //  AccountDetailView.swift
 //  Memo
 //
-//  Settings-style form for creating and editing accounts.
+//  Wallet-style interactive screen for creating and editing accounts.
 //
 
 import SwiftUI
@@ -26,7 +26,7 @@ struct AccountDetailView: View {
             if let vm = viewModel {
                 content(viewModel: vm)
             } else {
-                Color.memoBackground
+                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
             }
         }
         .onAppear {
@@ -43,137 +43,73 @@ struct AccountDetailView: View {
     @ViewBuilder
     private func content(viewModel: AccountFormViewModel) -> some View {
         @Bindable var viewModel = viewModel
-        Form {
-            Section("Account Details") {
-                TextField("Name", text: $viewModel.name)
+        
+        ScrollView {
+            VStack(spacing: 24) {
+                // Live Preview Card
+                AccountPreviewCard(
+                    name: viewModel.name,
+                    icon: viewModel.icon,
+                    colorHex: viewModel.colorHex,
+                    currencyCode: viewModel.currencyCode,
+                    balanceString: viewModel.openingBalanceString,
+                    accountType: viewModel.accountType
+                )
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
                 
-                Picker("Account Type", selection: $viewModel.accountType) {
-                    ForEach(AccountType.allCases, id: \.self) { type in
-                        Text(type.displayName).tag(type)
-                    }
-                }
+                // Account Information
+                AccountInformationSection(
+                    name: $viewModel.name,
+                    accountType: $viewModel.accountType,
+                    currencyCode: viewModel.currencyCode,
+                    onCurrencyTap: { viewModel.showCurrencyPicker = true },
+                    openingBalanceString: $viewModel.openingBalanceString
+                )
+                .padding(.horizontal, 16)
                 
-                Button {
-                    viewModel.showCurrencyPicker = true
-                } label: {
-                    HStack {
-                        Text("Currency")
-                            .foregroundStyle(.memoPrimaryText)
-                        Spacer()
-                        Text(viewModel.currencyCode)
-                            .foregroundStyle(.memoSecondaryText)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.memoTertiaryText)
-                    }
-                }
+                // Appearance
+                AccountAppearanceSection(
+                    icon: viewModel.icon,
+                    colorHex: viewModel.colorHex,
+                    onIconTap: { viewModel.showIconPicker = true },
+                    onColorTap: { viewModel.showColorPicker = true }
+                )
+                .padding(.horizontal, 16)
                 
-                HStack {
-                    Text("Opening Balance")
-                    CurrencyTextField(placeholder: "0", text: $viewModel.openingBalanceString)
-                        .frame(maxWidth: .infinity, minHeight: 32)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                
+                // Read-Only Metadata (If Editing)
                 if let account = viewModel.existingAccount {
-                    HStack {
-                        Text("Current Balance")
-                        Spacer()
-                        AmountText(
-                            amount: account.currentBalance,
-                            currencyCode: account.currencyCode,
-                            transactionType: account.currentBalance < 0 ? .expense : .income,
-                            size: .small,
-                            showSign: false
-                        )
-                    }
-                }
-            }
-            
-            if let account = viewModel.existingAccount {
-                Section("Activity Summary") {
-                    summaryRow(title: "Total Income", amount: appContainer.accountRepository.totalIncome(for: account), currency: account.currencyCode)
-                    summaryRow(title: "Total Expenses", amount: appContainer.accountRepository.totalExpenses(for: account), currency: account.currencyCode)
-                    summaryRow(title: "Transfer In", amount: appContainer.accountRepository.transferIn(for: account), currency: account.currencyCode)
-                    summaryRow(title: "Transfer Out", amount: appContainer.accountRepository.transferOut(for: account), currency: account.currencyCode)
-                    HStack {
-                        Text("Transactions")
-                            .foregroundStyle(.memoSecondaryText)
-                        Spacer()
-                        Text("\(appContainer.accountRepository.transactionCount(for: account))")
-                    }
-                }
-            }
-            
-            Section("Appearance") {
-                Button {
-                    viewModel.showIconPicker = true
-                } label: {
-                    HStack {
-                        Text("Icon")
-                            .foregroundStyle(.memoPrimaryText)
-                        Spacer()
-                        Image(systemName: viewModel.icon)
-                            .font(.title3)
-                            .foregroundStyle(Color(hex: viewModel.colorHex))
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.memoTertiaryText)
-                            .padding(.leading, 8)
-                    }
+                    AccountMetadataSection(
+                        isArchived: $viewModel.isArchived,
+                        totalIncome: appContainer.accountRepository.totalIncome(for: account),
+                        totalExpenses: appContainer.accountRepository.totalExpenses(for: account),
+                        transferIn: appContainer.accountRepository.transferIn(for: account),
+                        transferOut: appContainer.accountRepository.transferOut(for: account),
+                        transactionCount: appContainer.accountRepository.transactionCount(for: account),
+                        currencyCode: account.currencyCode
+                    )
+                    .padding(.horizontal, 16)
+                    
+                    AccountDangerZone(
+                        onDeleteTap: { viewModel.showDeleteConfirmation = true }
+                    )
+                    .padding(.horizontal, 16)
                 }
                 
-                Button {
-                    viewModel.showColorPicker = true
-                } label: {
-                    HStack {
-                        Text("Color")
-                            .foregroundStyle(.memoPrimaryText)
-                        Spacer()
-                        Circle()
-                            .fill(Color(hex: viewModel.colorHex))
-                            .frame(width: 24, height: 24)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.memoTertiaryText)
-                            .padding(.leading, 8)
-                    }
-                }
-            }
-            
-            if viewModel.isEditing {
-                Section {
-                    Toggle("Archive Account", isOn: $viewModel.isArchived)
-                        .tint(.memoPrimary)
-                } header: {
-                    Text("Status")
-                } footer: {
-                    Text("Archived accounts won't appear in the main picker, but their transactions remain visible.")
-                }
-                
-                Section {
-                    Button(role: .destructive) {
-                        viewModel.showDeleteConfirmation = true
-                    } label: {
-                        HStack {
-                            Spacer()
-                            Text("Delete Account")
-                            Spacer()
-                        }
-                    }
-                }
-            }
-            
-            if let error = viewModel.errorMessage {
-                Section {
+                // Errors
+                if let error = viewModel.errorMessage {
                     Text(error)
-                        .foregroundStyle(.memoExpense)
-                        .font(.memoCaption)
+                        .font(.caption)
+                        .foregroundStyle(Color.red)
+                        .padding(.horizontal)
                 }
+                
+                Spacer(minLength: 40)
             }
         }
-        .navigationTitle(viewModel.isEditing ? "Edit Account" : "New Account")
-        .navigationBarTitleDisplayMode(.inline)
+        .background(Color(UIColor.systemGroupedBackground))
+        .navigationTitle(viewModel.isEditing ? "Edit Account" : "Add Account")
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") {
@@ -181,7 +117,7 @@ struct AccountDetailView: View {
                         dismiss()
                     }
                 }
-                .fontWeight(.semibold)
+                .fontWeight(.bold)
             }
         }
         .sheet(isPresented: $viewModel.showIconPicker) {
@@ -237,21 +173,6 @@ struct AccountDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will permanently delete the account. Transactions associated with this account may lose their account reference.")
-        }
-    }
-    
-    private func summaryRow(title: String, amount: Decimal, currency: String) -> some View {
-        HStack {
-            Text(title)
-                .foregroundStyle(.memoSecondaryText)
-            Spacer()
-            AmountText(
-                amount: amount,
-                currencyCode: currency,
-                transactionType: amount < 0 ? .expense : .income,
-                size: .small,
-                showSign: false
-            )
         }
     }
 }
