@@ -14,14 +14,14 @@ import SwiftData
 @Model
 final class Transaction: Identifiable {
     var id: UUID
-    var originalMoneyAmount: Decimal
-    var originalMoneyCurrencyRaw: String
+    @Attribute(originalName: "amount") var originalMoneyAmount: Decimal
+    @Attribute(originalName: "currencyCode") var originalMoneyCurrencyRaw: String
     
-    var convertedMoneyAmount: Decimal
-    var convertedMoneyCurrencyRaw: String
+    var convertedMoneyAmount: Decimal = 0
+    var convertedMoneyCurrencyRaw: String = "IDR"
     
-    var exchangeRate: Decimal
-    var exchangeRateDate: Date
+    var exchangeRate: Decimal = 1.0
+    var exchangeRateDate: Date = Date()
     
     // Computed Properties for clean Money access
     @Transient var originalMoney: Money {

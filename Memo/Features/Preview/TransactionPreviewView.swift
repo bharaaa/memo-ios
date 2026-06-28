@@ -108,8 +108,10 @@ struct TransactionPreviewView: View {
                 isSaving: vm.isSaving,
                 onSave: {
                     vm.save { savedTransaction in
-                        onSaved?(savedTransaction)
-                        dismiss()
+                        if let tx = savedTransaction {
+                            onSaved?(tx)
+                            dismiss()
+                        }
                     }
                 }
             )

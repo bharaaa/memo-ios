@@ -47,9 +47,10 @@ final class AppContainer {
 
     // MARK: - Init
 
-    init(persistenceController: PersistenceController = .shared) {
-        self.persistenceController = persistenceController
-        let context = persistenceController.container.mainContext
+    init(persistenceController: PersistenceController? = nil) {
+        let pc = persistenceController ?? PersistenceController.shared
+        self.persistenceController = pc
+        let context = pc.container.mainContext
 
         let categoryRepo = CategoryRepository(context: context)
         let transactionRepo = TransactionRepository(context: context)

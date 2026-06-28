@@ -16,8 +16,8 @@ final class Account: Identifiable {
     var name: String
     var icon: String           // SF Symbol name
     var colorHex: String
-    var currencyCodeRaw: String
-    var openingBalanceAmount: Decimal
+    @Attribute(originalName: "currencyCode") var currencyCodeRaw: String
+    @Attribute(originalName: "openingBalance") var openingBalanceAmount: Decimal
     
     // Computed properties for clean Money access
     @Transient var currencyCode: CurrencyCode {

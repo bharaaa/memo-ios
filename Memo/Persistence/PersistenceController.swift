@@ -34,26 +34,38 @@ final class PersistenceController {
         Merchant.self,
         RecurringTransaction.self,
         Transfer.self,
+        ExchangeRate.self,
     ])
 
-    private init() {
+    private init(inMemory: Bool = false) {
         let configuration = ModelConfiguration(
             schema: Self.schema,
-            isStoredInMemoryOnly: false
+            isStoredInMemoryOnly: inMemory
             // Future: cloudKitDatabase: .automatic
         )
         do {
             container = try ModelContainer(for: Self.schema, configurations: [configuration])
+            repairMigratedDataIfNeeded(container: container)
         } catch {
-            fatalError("PersistenceController: failed to create ModelContainer — \(error)")
+            print("PersistenceController: failed to create ModelContainer, wiping store to recover — \(error)")
+            // Wipe the store to recover from corrupt migration state in development
+            let url = configuration.url
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: url.deletingPathExtension().appendingPathExtension("store-shm"))
+            try? FileManager.default.removeItem(at: url.deletingPathExtension().appendingPathExtension("store-wal"))
+            
+            do {
+                container = try ModelContainer(for: Self.schema, configurations: [configuration])
+                repairMigratedDataIfNeeded(container: container)
+            } catch {
+                fatalError("PersistenceController: Critical failure creating ModelContainer even after wipe — \(error)")
+            }
         }
     }
 
     /// In-memory container for SwiftUI Previews and unit tests.
     static var preview: PersistenceController = {
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let pc = PersistenceController()
-        return pc
+        return PersistenceController(inMemory: true)
     }()
 
     // MARK: - First-Launch Seeding
@@ -134,5 +146,35 @@ final class PersistenceController {
         context.insert(bank)
 
         try context.save()
+    }
+    
+    // MARK: - Post-Migration Repair
+    
+    /// Fixes old transactions that were migrated automatically by SwiftData lightweight migration.
+    /// Newly added `convertedMoneyAmount` defaults to 0, which breaks reports. We set them to match `originalMoneyAmount`.
+    private func repairMigratedDataIfNeeded(container: ModelContainer) {
+        let context = ModelContext(container)
+        let descriptor = FetchDescriptor<Transaction>()
+        
+        do {
+            let transactions = try context.fetch(descriptor)
+            var didRepair = false
+            
+            for tx in transactions {
+                if tx.convertedMoneyAmount == 0 && tx.originalMoneyAmount != 0 {
+                    tx.convertedMoneyAmount = tx.originalMoneyAmount
+                    tx.convertedMoneyCurrencyRaw = tx.originalMoneyCurrencyRaw
+                    tx.exchangeRate = 1.0
+                    tx.exchangeRateDate = tx.date
+                    didRepair = true
+                }
+            }
+            
+            if didRepair {
+                try context.save()
+            }
+        } catch {
+            print("Failed to repair migrated data: \(error)")
+        }
     }
 }
