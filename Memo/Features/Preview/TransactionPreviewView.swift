@@ -37,28 +37,6 @@ struct TransactionPreviewView: View {
                     Button("Cancel") { dismiss() }
                         .foregroundStyle(.memoSecondaryText)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    if let vm = viewModel {
-                        Button {
-                            vm.save {
-                                onSaved?()
-                                dismiss()
-                            }
-                        } label: {
-                            if vm.isSaving {
-                                ProgressView().tint(.white)
-                            } else {
-                                Text("Save")
-                                    .font(.memoHeadline)
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 6)
-                                    .background(Capsule().fill(.memoPrimary))
-                            }
-                        }
-                        .disabled(vm.isSaving)
-                    }
-                }
             }
         }
         .onAppear { setupViewModel() }
@@ -70,38 +48,66 @@ struct TransactionPreviewView: View {
 
     @ViewBuilder
     private func content(vm: TransactionPreviewViewModel) -> some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // Amount hero
-                amountSection(vm: vm)
-
-                // Form fields
-                TransactionForm(
-                    transactionType: Binding(get: { vm.transactionType }, set: { vm.transactionType = $0 }),
-                    merchantName: Binding(get: { vm.merchantName }, set: { vm.merchantName = $0 }),
-                    selectedCategory: Binding(get: { vm.selectedCategory }, set: { vm.selectedCategory = $0 }),
-                    selectedAccount: Binding(get: { vm.selectedAccount }, set: { vm.selectedAccount = $0 }),
-                    date: Binding(get: { vm.date }, set: { vm.date = $0 }),
-                    paymentMethod: Binding(get: { vm.paymentMethod }, set: { vm.paymentMethod = $0 }),
-                    note: Binding(get: { vm.note }, set: { vm.note = $0 }),
-                    onCategoryTap: { vm.showCategoryPicker = true },
-                    onAccountTap: { vm.showAccountPicker = true }
-                )
-
-                // Confidence badge
-                confidenceBadge(vm: vm)
-
-                // Error
-                if let error = vm.saveError {
-                    Text(error)
-                        .font(.memoSubheadline)
-                        .foregroundStyle(.memoExpense)
-                        .padding()
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Amount Hero
+                    PreviewAmountHeader(
+                        amount: Binding(get: { vm.amount }, set: { vm.amount = $0 }),
+                        transactionType: vm.transactionType,
+                        currencyCode: vm.currencyCode,
+                        merchantName: Binding(get: { vm.merchantName }, set: { vm.merchantName = $0 }),
+                        category: vm.selectedCategory,
+                        date: vm.date
+                    )
+                    
+                    // Smart Badge
+                    SmartConfirmationBadge(confidence: vm.confidence)
+                        .padding(.horizontal, 16)
+                    
+                    // Details
+                    EditableDetailSection(
+                        transactionType: Binding(get: { vm.transactionType }, set: { vm.transactionType = $0 }),
+                        category: vm.selectedCategory,
+                        account: vm.selectedAccount,
+                        paymentMethod: Binding(get: { vm.paymentMethod }, set: { vm.paymentMethod = $0 }),
+                        date: Binding(get: { vm.date }, set: { vm.date = $0 }),
+                        onCategoryTap: { vm.showCategoryPicker = true },
+                        onAccountTap: { vm.showAccountPicker = true }
+                    )
+                    .padding(.horizontal, 16)
+                    
+                    // Notes
+                    EditableNotesSection(
+                        note: Binding(get: { vm.note }, set: { vm.note = $0 })
+                    )
+                    .padding(.horizontal, 16)
+                    
+                    // Error
+                    if let error = vm.saveError {
+                        Text(error)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.red)
+                            .padding()
+                    }
+                    
+                    // Bottom padding to clear the toolbar
+                    Spacer(minLength: 100)
                 }
             }
-            .padding(.bottom, 40)
+            .background(Color(UIColor.systemGroupedBackground))
+            
+            // Pinned Save Button
+            SaveActionToolbar(
+                isSaving: vm.isSaving,
+                onSave: {
+                    vm.save {
+                        onSaved?()
+                        dismiss()
+                    }
+                }
+            )
         }
-        .background(Color.memoBackground)
         .sheet(isPresented: Binding(get: { vm.showCategoryPicker }, set: { vm.showCategoryPicker = $0 })) {
             categoryPickerSheet(vm: vm)
         }
@@ -109,28 +115,6 @@ struct TransactionPreviewView: View {
             accountPickerSheet(vm: vm)
         }
     }
-
-    // MARK: - Amount Hero
-
-    private func amountSection(vm: TransactionPreviewViewModel) -> some View {
-        VStack(spacing: 8) {
-            CurrencyTextField(
-                placeholder: "Amount",
-                text: Binding(get: { vm.amount }, set: { vm.amount = $0 }),
-                font: UIFont.systemFont(ofSize: 34, weight: .heavy),
-                textColor: UIColor(vm.transactionType.color),
-                textAlignment: .center
-            )
-            .frame(height: 50)
-            .padding(.top, 20)
-
-            Text(vm.currencyCode)
-                .font(.memoCaption)
-                .foregroundStyle(.memoSecondaryText)
-        }
-    }
-
-
 
     // MARK: - Category Picker Sheet
 
@@ -206,21 +190,6 @@ struct TransactionPreviewView: View {
         .presentationDetents([.medium])
     }
 
-    // MARK: - Confidence Badge
-
-    private func confidenceBadge(vm: TransactionPreviewViewModel) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: vm.confidence >= 0.8 ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .foregroundStyle(vm.confidence >= 0.8 ? Color.memoIncome : Color.memoAccent)
-            Text(vm.confidence >= 0.8
-                 ? "High confidence · \(vm.providerName.replacingOccurrences(of: "_", with: " ").capitalized)"
-                 : "Low confidence — please review carefully")
-            .font(.memoCaption)
-            .foregroundStyle(.memoSecondaryText)
-        }
-        .padding(.horizontal, 20)
-    }
-
     // MARK: - Setup
 
     private func setupViewModel() {
@@ -234,18 +203,4 @@ struct TransactionPreviewView: View {
             )
         }
     }
-}
-
-#Preview {
-    TransactionPreviewView(parsed: ParsedTransaction(
-        amount: 35000,
-        currencyCode: "IDR",
-        merchantName: "Coffee Shop",
-        categoryHint: "food",
-        confidence: 0.92,
-        rawInput: "Coffee 35k",
-        providerName: "rule_based"
-    ))
-    .environment(AppContainer())
-    .modelContainer(PersistenceController.shared.container)
 }
