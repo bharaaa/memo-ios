@@ -47,12 +47,13 @@ struct OpenAICompatibleProvider: AIProvider {
             throw AIProviderError.unavailable
         }
 
+        let preferredCurrency = UserDefaults.standard.string(forKey: "preferredCurrencyCode") ?? "IDR"
         let systemPrompt = """
         You are a financial assistant. Extract transaction details and respond ONLY with valid JSON.
         Schema: { "amount": number|null, "currencyCode": string|null, "merchantName": string|null,
           "categoryHint": string|null, "note": string|null, "dateString": string|null (YYYY-MM-DD),
           "transactionType": "expense"|"income", "confidence": number (0-1) }
-        Rules: "k" = *1000, "m" = *1000000. Default transactionType to "expense". Always intelligently populate 'note' with a short descriptive summary based on the input text.
+        Rules: "k" = *1000, "m" = *1000000. Default transactionType to "expense". Assume the default currency is \(preferredCurrency) unless explicitly stated otherwise. Always intelligently populate 'note' with a short descriptive summary based on the input text.
         """
 
         let messages: [[String: String]] = [

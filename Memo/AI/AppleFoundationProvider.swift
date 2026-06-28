@@ -73,7 +73,8 @@ struct AppleFoundationProvider: AIProvider {
     // MARK: - Prompt Construction
 
     private func buildPrompt(for input: String) -> String {
-        """
+        let preferredCurrency = UserDefaults.standard.string(forKey: "preferredCurrencyCode") ?? "IDR"
+        return """
         You are a financial assistant. Extract transaction details from the user's message.
         
         Rules:
@@ -83,6 +84,7 @@ struct AppleFoundationProvider: AIProvider {
         - transactionType should be "expense" unless clearly income
         - categoryHint should be a simple label like "food", "transport", "shopping"
         - Always populate 'note' with a descriptive summary of the purchase based on the input text
+        - Assume the default currency is \(preferredCurrency) unless explicitly stated otherwise
         - confidence: 0.0–1.0 based on how certain you are
         
         User message: "\(input)"
