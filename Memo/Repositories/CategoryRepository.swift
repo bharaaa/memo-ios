@@ -17,14 +17,12 @@ final class CategoryRepository: CategoryRepositoryProtocol {
     }
     
     func allCategories(type: TransactionType) -> [Category] {
-        var descriptor = FetchDescriptor<Category>(
+        let descriptor = FetchDescriptor<Category>(
             sortBy: [SortDescriptor(\.sortOrder)]
         )
-        // Map TransactionType to CategoryType
         let catType: CategoryType = type == .income ? .income : .expense
-        descriptor.predicate = #Predicate { $0.categoryType == catType }
-        
-        return (try? context.fetch(descriptor)) ?? []
+        let all = (try? context.fetch(descriptor)) ?? []
+        return all.filter { $0.categoryType == catType }
     }
     
     func allCategories() -> [Category] {
