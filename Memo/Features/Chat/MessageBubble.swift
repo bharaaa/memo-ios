@@ -101,66 +101,76 @@ struct MessageBubble: View {
     // MARK: - Parsed Transaction Card
 
     private func parsedCard(_ pt: ParsedTransaction) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Amount + type
-            HStack(alignment: .firstTextBaseline) {
-                Text(pt.transactionType == .income ? "+" : "−")
-                    .font(.memoAmount)
-                    .foregroundStyle(pt.transactionType.color)
-                Text(pt.amount?.formatted(currency: pt.currencyCode ?? "IDR") ?? "?")
-                    .font(.memoAmount)
-                    .foregroundStyle(pt.transactionType.color)
-            }
-
-            // Merchant + category hint
-            if let merchant = pt.merchantName {
-                Text(merchant)
-                    .font(.memoSubheadline)
-                    .foregroundStyle(.memoPrimaryText)
-            }
-
-            if let hint = pt.categoryHint {
-                CategoryBadge(icon: "tag.fill", name: hint.capitalized, colorHex: "#6366F1", style: .outlined)
-            }
-
-            // Date
-            if let date = pt.date {
-                Label(date.memoRelativeLabel, systemImage: "calendar")
-                    .font(.memoCaption)
-                    .foregroundStyle(.memoSecondaryText)
-            }
-
-            Divider()
-
-            // Actions
-            HStack {
-                Button("Edit") { onConfirm?(pt) }
-                    .font(.memoSubheadline)
-                    .foregroundStyle(.memoSecondaryText)
-                Spacer()
-                Button {
-                    onConfirm?(pt)
-                } label: {
-                    Label("Save", systemImage: "checkmark")
-                        .font(.memoHeadline)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 7)
-                        .background(Capsule().fill(.memoPrimary))
-                        .foregroundStyle(.white)
+        VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 10) {
+                // Amount + type
+                HStack(alignment: .firstTextBaseline) {
+                    Text(pt.transactionType == .income ? "+" : "−")
+                        .font(.memoAmount)
+                        .foregroundStyle(pt.transactionType.color)
+                    Text(pt.amount?.formatted(currency: pt.currencyCode ?? "IDR") ?? "?")
+                        .font(.memoAmount)
+                        .foregroundStyle(pt.transactionType.color)
                 }
-                .buttonStyle(.plain)
+
+                // Merchant + category hint
+                if let merchant = pt.merchantName {
+                    Text(merchant)
+                        .font(.memoSubheadline)
+                        .foregroundStyle(.memoPrimaryText)
+                }
+
+                if let hint = pt.categoryHint {
+                    CategoryBadge(icon: "tag.fill", name: hint.capitalized, colorHex: "#6366F1", style: .outlined)
+                }
+
+                // Date
+                if let date = pt.date {
+                    Label(date.memoRelativeLabel, systemImage: "calendar")
+                        .font(.memoCaption)
+                        .foregroundStyle(.memoSecondaryText)
+                }
+
+                Divider()
+
+                // Actions
+                HStack {
+                    Button("Edit") { onConfirm?(pt) }
+                        .font(.memoSubheadline)
+                        .foregroundStyle(.memoSecondaryText)
+                    Spacer()
+                    Button {
+                        onConfirm?(pt)
+                    } label: {
+                        Label("Save", systemImage: "checkmark")
+                            .font(.memoHeadline)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 7)
+                            .background(Capsule().fill(.memoPrimary))
+                            .foregroundStyle(.white)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(14)
+            .background {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(.regularMaterial)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(Color.memoPrimary.opacity(0.3), lineWidth: 0.5)
+                    }
+            }
+            .frame(maxWidth: 280)
+            
+            // Subtle Provider Status
+            if let type = AIProviderType(rawValue: pt.providerName) {
+                Text(type.statusLabel)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.memoSecondaryText)
+                    .padding(.leading, 12)
             }
         }
-        .padding(14)
-        .background {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.regularMaterial)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(Color.memoPrimary.opacity(0.3), lineWidth: 0.5)
-                }
-        }
-        .frame(maxWidth: 280)
     }
 }
 

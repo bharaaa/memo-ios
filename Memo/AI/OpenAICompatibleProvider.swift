@@ -13,12 +13,12 @@ import Foundation
 
 struct OpenAICompatibleProvider: AIProvider {
 
-    let name = "openai_compatible"
+    let name = "externalAPI"
 
     // MARK: - Configuration
 
     private var apiKey: String? {
-        UserDefaults.standard.string(forKey: "openai_api_key")
+        KeychainService.shared.loadString(forKey: "openai_api_key")
     }
 
     private var baseURL: String {

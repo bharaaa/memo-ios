@@ -112,63 +112,32 @@ struct FinanceSection: View {
 
 struct AISettingsSection: View {
     let searchText: String
-    @Binding var openAIKey: String
-    @Binding var openAIBaseURL: String
-    @Binding var openAIModel: String
-    let providerStatus: [String: Bool]
+    
+    @AppStorage("selectedAIProvider") private var selectedProvider: AIProviderType = .appleFoundation
     
     var body: some View {
-        Section("Artificial Intelligence") {
-            if matches("API Key Token OpenAI") {
-                HStack(spacing: 14) {
-                    SettingsIcon(iconName: "key.fill", backgroundColor: .gray)
-                    Text("API Key")
-                    Spacer()
-                    SecureField("sk-...", text: $openAIKey)
-                        .multilineTextAlignment(.trailing)
+        Section {
+            if matches("AI Provider Apple External Model") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(selectedProvider.activeBannerText)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Text(selectedProvider.activeBannerSubtext)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
-                        .onChange(of: openAIKey) { _, v in
-                            UserDefaults.standard.set(v, forKey: "openai_api_key")
-                        }
                 }
+                .padding(.vertical, 4)
+                
+                SettingsNavigationRow(
+                    title: "AI Provider",
+                    icon: "sparkles",
+                    iconColor: .purple,
+                    subtitle: selectedProvider.title,
+                    destination: SettingsView.SettingsRoute.aiProviderSelection
+                )
             }
-            if matches("Base URL Host") {
-                HStack(spacing: 14) {
-                    SettingsIcon(iconName: "network", backgroundColor: .blue)
-                    Text("Base URL")
-                    Spacer()
-                    TextField("https://...", text: $openAIBaseURL)
-                        .multilineTextAlignment(.trailing)
-                        .foregroundStyle(.secondary)
-                        .onChange(of: openAIBaseURL) { _, v in
-                            UserDefaults.standard.set(v, forKey: "openai_base_url")
-                        }
-                }
-            }
-            if matches("Model Name AI") {
-                HStack(spacing: 14) {
-                    SettingsIcon(iconName: "cpu", backgroundColor: .purple)
-                    Text("Model")
-                    Spacer()
-                    TextField("gpt-4o-mini", text: $openAIModel)
-                        .multilineTextAlignment(.trailing)
-                        .foregroundStyle(.secondary)
-                        .onChange(of: openAIModel) { _, v in
-                            UserDefaults.standard.set(v, forKey: "openai_model")
-                        }
-                }
-            }
-            
-            if !providerStatus.isEmpty && matches("Status Provider Apple") {
-                ForEach(providerStatus.sorted(by: { $0.key < $1.key }), id: \.key) { name, available in
-                    SettingsRow(
-                        title: name.replacingOccurrences(of: "_", with: " ").capitalized,
-                        icon: available ? "checkmark.seal.fill" : "xmark.seal.fill",
-                        iconColor: available ? .green : .gray,
-                        value: available ? "Available" : "Unavailable"
-                    )
-                }
-            }
+        } header: {
+            Text("Artificial Intelligence")
         }
     }
     

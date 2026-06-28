@@ -16,7 +16,7 @@ import FoundationModels
 
 struct AppleFoundationProvider: AIProvider {
 
-    let name = "apple_foundation"
+    let name = "appleFoundation"
 
     var isAvailable: Bool {
         get async {

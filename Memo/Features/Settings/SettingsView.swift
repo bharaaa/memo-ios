@@ -10,13 +10,8 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AppContainer.self) private var appContainer
     
-    @State private var openAIKey = UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
-    @State private var openAIBaseURL = UserDefaults.standard.string(forKey: "openai_base_url") ?? "https://api.openai.com/v1"
-    @State private var openAIModel = UserDefaults.standard.string(forKey: "openai_model") ?? "gpt-4o-mini"
-    @State private var providerStatus: [String: Bool] = [:]
-    
     @AppStorage("preferredCurrencyCode") private var preferredCurrency = "IDR"
-
+    
     @State private var searchText = ""
     @State private var showCurrencyPicker = false
     @State private var showLogoutConfirmation = false
@@ -26,6 +21,7 @@ struct SettingsView: View {
         case accounts
         case categories
         case budgets
+        case aiProviderSelection
     }
 
     var body: some View {
@@ -40,13 +36,7 @@ struct SettingsView: View {
                 
                 FinanceSection(searchText: searchText)
                 
-                AISettingsSection(
-                    searchText: searchText,
-                    openAIKey: $openAIKey,
-                    openAIBaseURL: $openAIBaseURL,
-                    openAIModel: $openAIModel,
-                    providerStatus: providerStatus
-                )
+                AISettingsSection(searchText: searchText)
                 
                 DataSection(searchText: searchText)
                 
@@ -61,7 +51,6 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Search Settings")
-            .task { await loadProviderStatus() }
             .navigationDestination(for: SettingsRoute.self) { route in
                 switch route {
                 case .appearance:
@@ -72,6 +61,8 @@ struct SettingsView: View {
                     CategoryListView()
                 case .budgets:
                     Text("Budgets Coming Soon").navigationTitle("Budgets")
+                case .aiProviderSelection:
+                    AIProviderSelectionView()
                 }
             }
         }
@@ -101,10 +92,6 @@ struct SettingsView: View {
         } message: {
             Text("Are you sure you want to log out? Your local data will remain on this device.")
         }
-    }
-
-    private func loadProviderStatus() async {
-        providerStatus = await appContainer.memoService.providerStatus()
     }
 }
 

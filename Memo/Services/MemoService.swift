@@ -14,7 +14,7 @@
 //
 
 import Foundation
-import UIKit
+import SwiftUI
 
 @MainActor
 @Observable
@@ -29,33 +29,26 @@ final class MemoService {
     private let ocr           = OCRService()
 
 
-    // MARK: - Confidence Threshold
-
-    /// If RuleBased confidence exceeds this, AI is not called.
-    private let ruleBasedThreshold: Double = 0.80
-
+    // MARK: - Selected Provider
+    
+    @ObservationIgnored
+    @AppStorage("selectedAIProvider")
+    var selectedProvider: AIProviderType = .appleFoundation
+    
     // MARK: - Parse Text
 
     func parse(input: String) async throws -> ParsedTransaction {
-        // 1. Try Apple Foundation Models
-        if await appleFM.isAvailable {
-            if let result = try? await appleFM.parse(input: input) {
-                return result
+        switch selectedProvider {
+        case .appleFoundation:
+            if await appleFM.isAvailable {
+                return try await appleFM.parse(input: input)
+            }
+        case .externalAPI:
+            if await openAI.isAvailable {
+                return try await openAI.parse(input: input)
             }
         }
-
-        // 2. Try OpenAI-compatible API
-        if await openAI.isAvailable {
-            if let result = try? await openAI.parse(input: input) {
-                return result
-            }
-        }
-
-        // 3. Fallback to rule-based parser if AI is unavailable or offline
-        if let result = try? await ruleBased.parse(input: input) {
-            return result
-        }
-
+        
         throw AIProviderError.unavailable
     }
 
@@ -82,13 +75,17 @@ final class MemoService {
     // MARK: - Private OCR Pipeline
 
     private func parseOCR(text: String, context: String) async throws -> ParsedTransaction {
-        if await appleFM.isAvailable {
-            return try await appleFM.parse(ocrText: text, context: context)
+        switch selectedProvider {
+        case .appleFoundation:
+            if await appleFM.isAvailable {
+                return try await appleFM.parse(ocrText: text, context: context)
+            }
+        case .externalAPI:
+            if await openAI.isAvailable {
+                return try await openAI.parse(ocrText: text, context: context)
+            }
         }
-        if await openAI.isAvailable {
-            return try await openAI.parse(ocrText: text, context: context)
-        }
-        return try await ruleBased.parse(input: text)
+        throw AIProviderError.unavailable
     }
 
     // MARK: - Provider Status (for Settings UI)
