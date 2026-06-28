@@ -8,38 +8,6 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - Profile Section
-
-struct ProfileSection: View {
-    @Binding var userName: String
-    let searchText: String
-    
-    var body: some View {
-        if searchText.isEmpty || "profile name account".localizedCaseInsensitiveContains(searchText) {
-            Section {
-                NavigationLink(value: "profile_detail") {
-                    HStack(spacing: 16) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundStyle(.gray.opacity(0.3))
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(userName.isEmpty ? "Personal Finance" : userName)
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                            
-                            Text("Apple ID, iCloud+, Media & Purchases")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Preferences Section
 
 struct PreferencesSection: View {

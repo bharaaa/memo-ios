@@ -16,8 +16,7 @@ struct SettingsView: View {
     @State private var providerStatus: [String: Bool] = [:]
     
     @AppStorage("preferredCurrencyCode") private var preferredCurrency = "IDR"
-    @AppStorage("userName") private var userName = ""
-    
+
     @State private var searchText = ""
     @State private var showCurrencyPicker = false
     @State private var showLogoutConfirmation = false
@@ -32,8 +31,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                ProfileSection(userName: $userName, searchText: searchText)
-                
+
                 PreferencesSection(
                     searchText: searchText,
                     preferredCurrency: preferredCurrency,
