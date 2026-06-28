@@ -11,16 +11,36 @@
 //
 
 import SwiftUI
+import UIKit
+
+fileprivate func dynamicColor(
+    lh: CGFloat, ls: CGFloat, lb: CGFloat,
+    dh: CGFloat, ds: CGFloat, db: CGFloat
+) -> Color {
+    Color(UIColor { trait in
+        if trait.userInterfaceStyle == .dark {
+            return UIColor(hue: dh, saturation: ds, brightness: db, alpha: 1.0)
+        } else {
+            return UIColor(hue: lh, saturation: ls, brightness: lb, alpha: 1.0)
+        }
+    })
+}
 
 // MARK: - Brand
 
 extension ShapeStyle where Self == Color {
 
     /// Primary indigo — used for key interactive elements and the app icon tint.
-    static var memoPrimary: Color  { Color(hue: 0.672, saturation: 0.72, brightness: 0.92) }
+    static var memoPrimary: Color  { 
+        dynamicColor(lh: 0.672, ls: 0.72, lb: 0.92,
+                     dh: 0.672, ds: 0.60, db: 1.00)
+    }
 
     /// Warm amber — accent for confirmations and highlights.
-    static var memoAccent: Color   { Color(hue: 0.10,  saturation: 0.88, brightness: 0.96) }
+    static var memoAccent: Color   { 
+        dynamicColor(lh: 0.10, ls: 0.88, lb: 0.96,
+                     dh: 0.10, ds: 0.75, db: 1.00)
+    }
 }
 
 // MARK: - Semantic Transaction Colours
@@ -28,13 +48,22 @@ extension ShapeStyle where Self == Color {
 extension ShapeStyle where Self == Color {
 
     /// Expense colour — muted coral red.
-    static var memoExpense: Color  { Color(hue: 0.01,  saturation: 0.75, brightness: 0.88) }
+    static var memoExpense: Color  { 
+        dynamicColor(lh: 0.01, ls: 0.75, lb: 0.88,
+                     dh: 0.01, ds: 0.60, db: 1.00)
+    }
 
     /// Income colour — calm emerald green.
-    static var memoIncome: Color   { Color(hue: 0.38,  saturation: 0.60, brightness: 0.75) }
+    static var memoIncome: Color   { 
+        dynamicColor(lh: 0.38, ls: 0.60, lb: 0.75,
+                     dh: 0.38, ds: 0.50, db: 0.90)
+    }
 
     /// Transfer colour — sky blue.
-    static var memoTransfer: Color { Color(hue: 0.58,  saturation: 0.65, brightness: 0.88) }
+    static var memoTransfer: Color { 
+        dynamicColor(lh: 0.58, ls: 0.65, lb: 0.88,
+                     dh: 0.58, ds: 0.55, db: 1.00)
+    }
 }
 
 // MARK: - Surfaces (adaptive)

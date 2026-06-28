@@ -178,7 +178,7 @@ struct SettingsView: View {
             .navigationDestination(for: SettingsRoute.self) { route in
                 switch route {
                 case .appearance:
-                    Text("Appearance Settings Coming Soon").navigationTitle("Appearance")
+                    AppearanceSettingsView()
                 case .accounts:
                     AccountListView()
                 case .categories:

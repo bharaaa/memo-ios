@@ -14,6 +14,7 @@ struct ContentView: View {
 
     @Environment(AppContainer.self) private var appContainer
     @State private var selectedTab = 0
+    @AppStorage("appTheme") private var appTheme: AppTheme = .system
 
     var body: some View {
         Group {
@@ -29,6 +30,7 @@ struct ContentView: View {
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.9), value: appContainer.hasCompletedOnboarding)
+        .preferredColorScheme(appTheme.colorScheme)
     }
 
     // MARK: - Main Tabs
