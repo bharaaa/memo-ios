@@ -53,9 +53,8 @@ struct AccountDetailView: View {
                 HStack {
                     Text("Opening Balance")
                     Spacer()
-                    TextField("0", text: $viewModel.openingBalanceString)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
+                    CurrencyTextField(placeholder: "0", text: $viewModel.openingBalanceString)
+                        .frame(height: 32)
                 }
                 
                 if let account = viewModel.existingAccount {

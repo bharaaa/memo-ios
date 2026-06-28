@@ -28,9 +28,8 @@ struct TransferView: View {
                     HStack {
                         Text("Amount")
                         Spacer()
-                        TextField("0", text: $viewModel.amountString)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
+                        CurrencyTextField(placeholder: "0", text: $viewModel.amountString)
+                            .frame(height: 32)
                     }
                     
                     Picker("From", selection: $viewModel.sourceAccount) {

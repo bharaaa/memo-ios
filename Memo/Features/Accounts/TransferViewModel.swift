@@ -32,7 +32,7 @@ final class TransferViewModel {
     
     // MARK: - Actions
     func save() -> Bool {
-        let amount = Decimal(string: amountString.replacingOccurrences(of: ",", with: "")) ?? 0
+        let amount = Decimal(string: amountString.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)) ?? 0
         guard amount > 0 else {
             errorMessage = "Please enter a valid amount."
             return false

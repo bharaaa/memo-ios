@@ -63,7 +63,7 @@ final class AccountFormViewModel {
             return false
         }
         
-        let openingBalance = Decimal(string: openingBalanceString.replacingOccurrences(of: ",", with: "")) ?? 0
+        let openingBalance = Decimal(string: openingBalanceString.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)) ?? 0
         
         isSaving = true
         errorMessage = nil

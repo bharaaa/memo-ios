@@ -235,14 +235,14 @@ struct TransactionPreviewView: View {
 
     private func amountSection(vm: TransactionPreviewViewModel) -> some View {
         VStack(spacing: 8) {
-            TextField(
-                "Amount",
-                text: Binding(get: { vm.amount }, set: { vm.amount = $0 })
+            CurrencyTextField(
+                placeholder: "Amount",
+                text: Binding(get: { vm.amount }, set: { vm.amount = $0 }),
+                font: UIFont.systemFont(ofSize: 34, weight: .heavy),
+                textColor: UIColor(vm.transactionType.color),
+                textAlignment: .center
             )
-            .font(.memoAmountLarge)
-            .foregroundStyle(vm.transactionType.color)
-            .multilineTextAlignment(.center)
-            .keyboardType(.decimalPad)
+            .frame(height: 50)
             .padding(.top, 20)
 
             Text(vm.currencyCode)

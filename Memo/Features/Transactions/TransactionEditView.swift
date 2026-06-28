@@ -194,14 +194,14 @@ struct TransactionEditView: View {
     
     private var amountSection: some View {
         VStack(spacing: 8) {
-            TextField(
-                "Amount",
-                text: $amountString
+            CurrencyTextField(
+                placeholder: "Amount",
+                text: $amountString,
+                font: UIFont.systemFont(ofSize: 34, weight: .heavy),
+                textColor: UIColor(transactionType.color),
+                textAlignment: .center
             )
-            .font(.memoAmountLarge)
-            .foregroundStyle(transactionType.color)
-            .multilineTextAlignment(.center)
-            .keyboardType(.decimalPad)
+            .frame(height: 50)
             .padding(.top, 20)
             
             Text(currencyCode)
