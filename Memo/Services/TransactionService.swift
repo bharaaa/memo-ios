@@ -82,11 +82,17 @@ final class TransactionService {
             resolvedAccount = accountRepository.defaultAccount()
         }
         
-        guard let finalAccount = resolvedAccount else {
-            throw ValidationError.missingAccount
+        let originalCurrency: CurrencyCode
+        if let acc = resolvedAccount {
+            originalCurrency = acc.currencyCode
+        } else {
+            if let parsedCurrencyRaw = parsed.currencyCode, let parsedCurrency = CurrencyCode(rawValue: parsedCurrencyRaw) {
+                originalCurrency = parsedCurrency
+            } else {
+                originalCurrency = currencyService.baseCurrency
+            }
         }
 
-        let originalCurrency = finalAccount.currencyCode
         var finalAmount = parsed.amount!
         
         // If AI parsed a different currency than the account, we theoretically should convert it.
@@ -120,7 +126,7 @@ final class TransactionService {
             isConfirmed: true
         )
 
-        transaction.account = finalAccount
+        transaction.account = resolvedAccount
 
         // Resolve category from hint
         if let hint = parsed.categoryHint {
