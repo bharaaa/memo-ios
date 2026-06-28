@@ -67,8 +67,20 @@ final class TransactionPreviewViewModel {
         // Resolve category from hint
         self.selectedCategory = categoryService.match(hint: parsed.categoryHint)
 
-        // Load default account
-        self.selectedAccount = fetchDefaultAccount()
+        // Resolve account from hint or fallback to default
+        if let accountHint = parsed.accountHint?.lowercased() {
+            let descriptor = FetchDescriptor<Account>(
+                predicate: #Predicate { $0.isArchived == false }
+            )
+            if let accounts = try? modelContext.fetch(descriptor),
+               let matchedAccount = accounts.first(where: { $0.name.lowercased().contains(accountHint) }) {
+                self.selectedAccount = matchedAccount
+            } else {
+                self.selectedAccount = fetchDefaultAccount()
+            }
+        } else {
+            self.selectedAccount = fetchDefaultAccount()
+        }
     }
 
     // MARK: - Save
