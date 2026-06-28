@@ -14,21 +14,15 @@ struct BalanceSection: View {
     @AppStorage("isBalanceHidden") private var isBalanceHidden = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             
             // MARK: - Total Balance Hero
             VStack(alignment: .leading, spacing: 4) {
-                Text("Total Balance")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.secondary)
-                    .textCase(.uppercase)
-                
-                HStack(alignment: .firstTextBaseline) {
-                    Text(isBalanceHidden ? "Rp •••••••••" : totalAssets)
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.primary)
-                    
-                    Spacer()
+                HStack(spacing: 8) {
+                    Text("TOTAL BALANCE")
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                        .tracking(0.5)
                     
                     Button {
                         withAnimation(.spring) {
@@ -36,10 +30,14 @@ struct BalanceSection: View {
                         }
                     } label: {
                         Image(systemName: isBalanceHidden ? "eye.slash.fill" : "eye.fill")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Color.secondary)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color(UIColor.tertiaryLabel))
                     }
                 }
+                
+                Text(isBalanceHidden ? "Rp •••••••••" : totalAssets)
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.primary)
             }
             .memoScreenPadding()
             
@@ -49,7 +47,7 @@ struct BalanceSection: View {
                 NavigationLink(value: "ViewAllAccounts") {
                     HStack {
                         Image(systemName: "plus.circle.fill")
-                            .font(.title2)
+                            .font(.title3)
                             .foregroundStyle(Color.memoPrimary)
                         Text("Add an Account")
                             .font(.body)
@@ -58,7 +56,7 @@ struct BalanceSection: View {
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color(UIColor.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .memoScreenPadding()
                 }
                 .buttonStyle(.plain)
@@ -76,14 +74,14 @@ struct BalanceSection: View {
                         NavigationLink(value: "ViewAllAccounts") {
                             VStack {
                                 Image(systemName: "ellipsis.circle.fill")
-                                    .font(.system(size: 32))
+                                    .font(.system(size: 28))
                                     .foregroundStyle(Color(UIColor.tertiaryLabel))
                                 Text("View All")
-                                    .font(.caption)
+                                    .font(.caption2)
                                     .foregroundStyle(Color.secondary)
-                                    .padding(.top, 4)
+                                    .padding(.top, 2)
                             }
-                            .frame(width: 100, height: 110)
+                            .frame(width: 80, height: 90)
                             .background(Color(UIColor.secondarySystemGroupedBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         }
@@ -93,7 +91,7 @@ struct BalanceSection: View {
                 }
             }
         }
-        .padding(.bottom, 24)
+        .padding(.bottom, 32) // More breathing room
     }
 }
 
@@ -102,7 +100,7 @@ fileprivate struct WalletPassCard: View {
     let isBalanceHidden: Bool
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 // Compact icon
                 ZStack {
@@ -123,31 +121,26 @@ fileprivate struct WalletPassCard: View {
                 Spacer(minLength: 16)
             }
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Current Balance")
-                    .font(.caption2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.secondary)
-                
-                if isBalanceHidden {
-                    Text("••••••")
-                        .font(.headline)
-                        .foregroundStyle(Color.primary)
-                } else {
-                    AmountText(
-                        amount: account.currentBalance,
-                        currencyCode: account.currencyCode,
-                        transactionType: account.currentBalance < 0 ? .expense : .income,
-                        size: .regular,
-                        showSign: false
-                    )
-                }
+            Spacer(minLength: 12)
+            
+            if isBalanceHidden {
+                Text("••••••")
+                    .font(.headline)
+                    .foregroundStyle(Color.primary)
+            } else {
+                AmountText(
+                    amount: account.currentBalance,
+                    currencyCode: account.currencyCode,
+                    transactionType: account.currentBalance < 0 ? .expense : .income,
+                    size: .regular,
+                    showSign: false
+                )
             }
         }
         .padding(16)
-        .frame(width: 200, height: 110, alignment: .topLeading)
+        .frame(width: 180, height: 90, alignment: .topLeading)
         .background(Color(UIColor.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.02), radius: 4, x: 0, y: 2) // Softer shadow
     }
 }

@@ -14,10 +14,10 @@ struct RecentMemoriesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Recent Memories")
-                    .font(.subheadline)
+                Text("RECENT MEMORIES")
+                    .font(.caption)
                     .foregroundStyle(Color.secondary)
-                    .textCase(.uppercase)
+                    .tracking(0.5)
                 Spacer()
                 NavigationLink(value: "SeeAll") {
                     Text("See All")
@@ -37,7 +37,7 @@ struct RecentMemoriesSection: View {
                         .font(.headline)
                         .foregroundStyle(Color.primary)
                     
-                    Text("Try typing: Coffee 35k")
+                    Text("Try typing an expense above")
                         .font(.subheadline)
                         .foregroundStyle(Color.secondary)
                 }
@@ -53,7 +53,7 @@ struct RecentMemoriesSection: View {
                         
                         if transaction != transactions.last {
                             Divider()
-                                .padding(.leading, 64)
+                                .padding(.leading, 64) // Aligns with the text, skipping the icon
                         }
                     }
                 }
@@ -62,7 +62,6 @@ struct RecentMemoriesSection: View {
                 .memoScreenPadding()
             }
         }
-        .padding(.top, 16)
         .padding(.bottom, 32)
     }
 }
@@ -95,7 +94,7 @@ struct MemoryRowView: View {
                     .foregroundStyle(Color.secondary)
             }
             
-            Spacer()
+            Spacer(minLength: 8)
             
             AmountText(
                 amount: transaction.amount,
@@ -103,6 +102,7 @@ struct MemoryRowView: View {
                 transactionType: transaction.transactionType,
                 size: .small
             )
+            .layoutPriority(1) // Ensure amount doesn't truncate before text does
             
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .semibold))

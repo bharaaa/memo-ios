@@ -12,21 +12,21 @@ struct GreetingSection: View {
     let userName: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             Text("\(timeGreeting)\(userName.isEmpty ? "" : ",")")
                 .font(.subheadline)
-                .foregroundStyle(.memoSecondaryText)
+                .foregroundStyle(Color.secondary)
                 
             if !userName.isEmpty {
                 Text(userName)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.memoPrimaryText)
+                    .font(.title3)
+                    .fontWeight(.regular)
+                    .foregroundStyle(Color.primary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .memoScreenPadding()
         .padding(.top, 16)
-        .padding(.bottom, 16)
+        .padding(.bottom, 24) // Increased breathing room above composer
     }
 }

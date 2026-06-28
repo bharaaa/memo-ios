@@ -2,7 +2,7 @@
 //  ConversationComposer.swift
 //  Memo
 //
-//  A native, Apple-style input composer.
+//  A native, Apple-style input composer with progressive expansion.
 //
 
 import SwiftUI
@@ -25,26 +25,32 @@ struct ConversationComposer: View {
         "Coffee 35k",
         "Lunch 45k yesterday",
         "Paid Netflix using Jago",
-        "Transfer 500k to GoPay"
+        "Transfer 500k to Cash",
+        "Bought groceries 180k"
     ]
     
+    var isExpanded: Bool {
+        isFocused || !text.isEmpty || isProcessing
+    }
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
             // Composer Box
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 0) {
                 // Text Input area
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
                     Image(systemName: "pencil")
                         .font(.system(size: 18, weight: .regular))
-                        .foregroundStyle(Color.memoPrimary)
-                        .padding(.top, 8)
+                        .foregroundStyle(isExpanded ? Color.memoPrimary : Color(UIColor.secondaryLabel))
+                        // Make sure it visually centers with the single line text field when collapsed
+                        .padding(.top, isExpanded ? 4 : 0)
                     
-                    ZStack(alignment: .topLeading) {
+                    ZStack(alignment: isExpanded ? .topLeading : .leading) {
                         if text.isEmpty && !isFocused {
                             Text(placeholders[placeholderIndex])
                                 .font(.body)
-                                .foregroundStyle(Color(UIColor.placeholderText))
-                                .padding(.top, 8)
+                                .foregroundStyle(Color(UIColor.quaternaryLabel))
+                                .padding(.top, isExpanded ? 4 : 0)
                                 .allowsHitTesting(false)
                         }
                         
@@ -52,69 +58,69 @@ struct ConversationComposer: View {
                             .font(.body)
                             .foregroundStyle(Color.primary)
                             .focused($isFocused)
-                            .padding(.top, 8)
-                            .padding(.bottom, 8)
-                            .lineLimit(1...6)
+                            .padding(.top, isExpanded ? 4 : 0)
+                            .lineLimit(isExpanded ? 1...6 : 1...1)
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 6)
+                .padding(.vertical, isExpanded ? 12 : 16)
                 
-                // Toolbar Area
-                HStack(spacing: 24) {
-                    Button(action: onImport) {
-                        Image(systemName: "paperclip")
-                            .font(.system(size: 20, weight: .regular))
-                            .foregroundStyle(Color.secondary)
-                    }
-                    
-                    Button(action: onScan) {
-                        Image(systemName: "camera")
-                            .font(.system(size: 20, weight: .regular))
-                            .foregroundStyle(Color.secondary)
-                    }
-                    
-                    Button(action: onSpeak) {
-                        Image(systemName: "mic")
-                            .font(.system(size: 20, weight: .regular))
-                            .foregroundStyle(Color.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Button(action: onSend) {
-                        if isProcessing {
-                            ProgressView()
-                                .tint(Color.memoPrimary)
-                                .frame(width: 32, height: 32)
-                        } else {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.system(size: 32))
-                                .foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color(UIColor.quaternaryLabel) : Color.memoPrimary)
+                // Toolbar Area (Only visible when expanded)
+                if isExpanded {
+                    Divider()
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 8)
+                        
+                    HStack(spacing: 24) {
+                        Button(action: onImport) {
+                            Image(systemName: "paperclip")
+                                .font(.system(size: 20, weight: .regular))
+                                .foregroundStyle(Color.secondary)
                         }
+                        
+                        Button(action: onScan) {
+                            Image(systemName: "camera")
+                                .font(.system(size: 20, weight: .regular))
+                                .foregroundStyle(Color.secondary)
+                        }
+                        
+                        Button(action: onSpeak) {
+                            Image(systemName: "mic")
+                                .font(.system(size: 20, weight: .regular))
+                                .foregroundStyle(Color.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: onSend) {
+                            if isProcessing {
+                                ProgressView()
+                                    .tint(Color.memoPrimary)
+                                    .frame(width: 32, height: 32)
+                            } else {
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color(UIColor.quaternaryLabel) : Color.memoPrimary)
+                            }
+                        }
+                        .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing)
+                        .animation(.easeInOut(duration: 0.2), value: text.isEmpty)
                     }
-                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing)
-                    .animation(.easeInOut(duration: 0.2), value: text.isEmpty)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 12)
             }
             .background(Color(UIColor.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(Color(UIColor.separator).opacity(0.5), lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(isFocused ? Color.memoPrimary : Color(UIColor.separator).opacity(0.5), lineWidth: isFocused ? 1.5 : 0.5)
             )
             .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isExpanded)
+            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isFocused)
             .memoScreenPadding()
-            
-            // Subtle guidance below composer
-            if !isFocused && text.isEmpty {
-                Text("Type naturally, AI will organize it.")
-                    .font(.caption)
-                    .foregroundStyle(Color.secondary)
-                    .padding(.horizontal, 32)
-            }
         }
         .onAppear {
             startPlaceholderTimer()
