@@ -1,0 +1,107 @@
+# =========================
+# Xcode
+# =========================
+# Ignore user-specific Xcode state, derived data, and personal workspace settings.
+# Project files themselves (.xcodeproj) are NOT ignored.
+build/
+Build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.hmap
+
+# =========================
+# Build Artifacts & Archives
+# =========================
+# Ignore all compiled application binaries, exported archives, and zip exports.
+*.app
+*.ipa
+*.xcarchive
+*.dSYM.zip
+*.dSYM
+*.zip
+
+# =========================
+# Swift Package Manager
+# =========================
+# Ignore temporary build folders created by SPM.
+# NOTE: Package.resolved is explicitly NOT ignored to ensure deterministic builds.
+.build/
+.swiftpm/xcode/
+.swiftpm/security/
+
+# =========================
+# macOS
+# =========================
+# Ignore Finder metadata and desktop services files.
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# =========================
+# Logs
+# =========================
+# Ignore system, crash, and temporary application logs.
+*.log
+*.crash
+
+# =========================
+# Secrets
+# =========================
+# Ignore files containing sensitive API keys, tokens, or credentials.
+Secrets/
+APIKeys.swift
+Config.local.plist
+LocalSettings.plist
+GoogleService-Info.plist
+
+# =========================
+# Environment Files
+# =========================
+# Ignore local environment variables to prevent leaking credentials.
+# The .env.example file is explicitly allowed.
+.env
+.env.*
+!.env.example
+
+# =========================
+# Certificates
+# =========================
+# Ignore developer provisioning profiles, keys, and signing certificates.
+*.cer
+*.p12
+*.mobileprovision
+*.certsigningrequest
+
+# =========================
+# AI Configuration
+# =========================
+# Ignore local AI configuration files that might contain OpenAI, LM Studio, Ollama, or OpenRouter API keys.
+# Example configurations are explicitly kept.
+AIConfig.plist
+!AIConfig.example.plist
+
+# =========================
+# Fastlane
+# =========================
+# Ignore Fastlane screenshots, test reports, and temporary build outputs.
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# =========================
+# Local Development
+# =========================
+# Ignore developer-only scratch files, backups, temporary notes, and swap files.
+*~
+*.swp
+*.bak
+*.tmp
+scratch/
+temp/
