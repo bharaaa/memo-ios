@@ -92,7 +92,7 @@ struct HomeView: View {
                 .padding(.top, 16)
                 .padding(.trailing, 24)
             }
-            .background(Color.memoBackground)
+            .background(Color(UIColor.systemGroupedBackground))
             .navigationBarHidden(true)
             .navigationDestination(for: Transaction.self) { transaction in
                 TransactionDetailView(transaction: transaction)
