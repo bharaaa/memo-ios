@@ -17,7 +17,7 @@ final class Account: Identifiable {
     var icon: String           // SF Symbol name
     var colorHex: String
     var currencyCode: String   // ISO 4217, e.g. "IDR", "USD"
-    var balance: Decimal
+    var openingBalance: Decimal = 0
     var accountType: AccountType
     var isDefault: Bool        // one account can be the default for new transactions
     var isArchived: Bool
@@ -26,6 +26,16 @@ final class Account: Identifiable {
 
     @Relationship(deleteRule: .nullify, inverse: \Transaction.account)
     var transactions: [Transaction]
+
+    var currentBalance: Decimal {
+        let income = transactions
+            .filter { $0.transactionType == .income }
+            .reduce(Decimal(0)) { $0 + $1.amount }
+        let expense = transactions
+            .filter { $0.transactionType == .expense }
+            .reduce(Decimal(0)) { $0 + $1.amount }
+        return openingBalance + income - expense
+    }
 
     init(
         name: String,
@@ -40,7 +50,7 @@ final class Account: Identifiable {
         self.icon = icon
         self.colorHex = colorHex
         self.currencyCode = currencyCode
-        self.balance = 0
+        self.openingBalance = 0
         self.accountType = accountType
         self.isDefault = isDefault
         self.isArchived = false

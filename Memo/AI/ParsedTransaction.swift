@@ -19,6 +19,7 @@ struct ParsedTransaction: Sendable {
     var currencyCode: String?          // ISO 4217 — nil means "use account default"
     var merchantName: String?
     var categoryHint: String?          // natural language hint, e.g. "food", "transport"
+    var accountHint: String?           // natural language hint, e.g. "cash", "bca"
     var note: String?
     var date: Date?
     var paymentMethod: PaymentMethod?
@@ -47,6 +48,7 @@ struct ParsedTransaction: Sendable {
         currencyCode: String? = nil,
         merchantName: String? = nil,
         categoryHint: String? = nil,
+        accountHint: String? = nil,
         note: String? = nil,
         date: Date? = nil,
         paymentMethod: PaymentMethod? = nil,
@@ -59,6 +61,7 @@ struct ParsedTransaction: Sendable {
         self.currencyCode = currencyCode
         self.merchantName = merchantName
         self.categoryHint = categoryHint
+        self.accountHint = accountHint
         self.note = note
         self.date = date
         self.paymentMethod = paymentMethod

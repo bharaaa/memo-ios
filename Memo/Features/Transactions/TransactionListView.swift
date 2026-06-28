@@ -15,7 +15,8 @@ struct TransactionListView: View {
     @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
 
     @State private var showChat = false
-    @State private var selectedTransaction: Transaction?
+    @State private var showEditSheet = false
+    @State private var transactionToEdit: Transaction?
     @State private var searchText = ""
 
     private var filtered: [Transaction] {
@@ -54,13 +55,16 @@ struct TransactionListView: View {
                         ForEach(grouped, id: \.0) { (dateLabel, group) in
                             Section {
                                 ForEach(group) { transaction in
-                                    TransactionRowView(transaction: transaction)
-                                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                            deleteButton(transaction)
-                                        }
-                                        .onTapGesture {
-                                            selectedTransaction = transaction
-                                        }
+                                    NavigationLink(value: transaction) {
+                                        TransactionRowView(transaction: transaction)
+                                    }
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                        deleteButton(transaction)
+                                        duplicateButton(transaction)
+                                    }
+                                    .swipeActions(edge: .leading) {
+                                        editButton(transaction)
+                                    }
                                 }
                             } header: {
                                 Text(dateLabel)
@@ -87,13 +91,20 @@ struct TransactionListView: View {
                     }
                 }
             }
+            .navigationDestination(for: Transaction.self) { transaction in
+                TransactionDetailView(transaction: transaction)
+            }
         }
         .sheet(isPresented: $showChat) {
             ChatView().environment(appContainer)
         }
+        .sheet(item: $transactionToEdit) { transaction in
+            TransactionEditView(transaction: transaction)
+                .environment(appContainer)
+        }
     }
 
-    // MARK: - Delete
+    // MARK: - Actions
 
     private func deleteButton(_ transaction: Transaction) -> some View {
         Button(role: .destructive) {
@@ -101,6 +112,24 @@ struct TransactionListView: View {
         } label: {
             Label("Delete", systemImage: "trash")
         }
+    }
+    
+    private func duplicateButton(_ transaction: Transaction) -> some View {
+        Button {
+            try? appContainer.transactionService.duplicate(transaction)
+        } label: {
+            Label("Duplicate", systemImage: "doc.on.doc")
+        }
+        .tint(.memoSecondaryText)
+    }
+    
+    private func editButton(_ transaction: Transaction) -> some View {
+        Button {
+            transactionToEdit = transaction
+        } label: {
+            Label("Edit", systemImage: "pencil")
+        }
+        .tint(.memoPrimary)
     }
 }
 

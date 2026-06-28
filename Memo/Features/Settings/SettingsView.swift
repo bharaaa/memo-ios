@@ -16,6 +16,8 @@ struct SettingsView: View {
     @AppStorage("preferredCurrencyCode") private var preferredCurrency = "IDR"
     @AppStorage("userName") private var userName = ""
 
+    @State private var showLogoutConfirmation = false
+
     var body: some View {
         NavigationStack {
             List {
@@ -42,6 +44,28 @@ struct SettingsView: View {
                                 .font(.caption)
                                 .foregroundStyle(.memoTertiaryText)
                         }
+                    }
+                }
+                
+                // MARK: Appearance
+                Section("Appearance") {
+                    NavigationLink(destination: Text("Appearance Settings Coming Soon").navigationTitle("Appearance")) {
+                        Label("Theme & App Icon", systemImage: "paintpalette.fill")
+                    }
+                }
+                
+                // MARK: Data
+                Section("Data") {
+                    NavigationLink(destination: AccountListView()) {
+                        Label("Accounts", systemImage: "building.columns.fill")
+                    }
+                    
+                    NavigationLink(destination: CategoryListView()) {
+                        Label("Categories", systemImage: "tag.fill")
+                    }
+                    
+                    NavigationLink(destination: Text("Budgets Coming Soon").navigationTitle("Budgets")) {
+                        Label("Budgets", systemImage: "chart.pie.fill")
                     }
                 }
 
@@ -103,6 +127,21 @@ struct SettingsView: View {
                         }
                     }
                 }
+                
+                // MARK: Data Management
+                Section("Data Management") {
+                    Button {
+                        // Export
+                    } label: {
+                        Label("Export Data", systemImage: "square.and.arrow.up")
+                    }
+                    
+                    Button {
+                        // Import
+                    } label: {
+                        Label("Import Data", systemImage: "square.and.arrow.down")
+                    }
+                }
 
                 // MARK: About
                 Section("About") {
@@ -110,6 +149,19 @@ struct SettingsView: View {
                     LabeledContent("Build", value: "1")
                     Link(destination: URL(string: "https://github.com")!) {
                         Label("Source & Privacy", systemImage: "lock.shield")
+                    }
+                }
+                
+                // MARK: Danger Zone
+                Section {
+                    Button(role: .destructive) {
+                        showLogoutConfirmation = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Logout")
+                            Spacer()
+                        }
                     }
                 }
             }
@@ -130,6 +182,18 @@ struct SettingsView: View {
                     }
             }
             .presentationDetents([.medium, .large])
+        }
+        .confirmationDialog(
+            "Logout from Memo?",
+            isPresented: $showLogoutConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Logout", role: .destructive) {
+                // Logout logic here
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to log out? Your local data will remain on this device.")
         }
     }
 

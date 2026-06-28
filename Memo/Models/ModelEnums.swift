@@ -69,6 +69,17 @@ enum TransactionSource: String, Codable, Sendable {
     case share     = "share"
     case `import`  = "import"
     case recurring = "recurring"
+
+    var displayName: String {
+        switch self {
+        case .manual:    return "Manual"
+        case .chat:      return "Chat"
+        case .ocr:       return "Scan / OCR"
+        case .share:     return "Share Extension"
+        case .import:    return "Import"
+        case .recurring: return "Recurring"
+        }
+    }
 }
 
 // MARK: - Account
@@ -106,6 +117,13 @@ enum AccountType: String, Codable, CaseIterable, Sendable {
 enum CategoryType: String, Codable, CaseIterable, Sendable {
     case expense = "expense"
     case income  = "income"
+
+    var displayName: String {
+        switch self {
+        case .expense: return "Expense"
+        case .income:  return "Income"
+        }
+    }
 }
 
 // MARK: - Budget

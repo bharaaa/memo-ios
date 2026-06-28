@@ -34,6 +34,7 @@ struct RuleBasedProvider: AIProvider {
         result.date          = extractDate(from: trimmed)
         result.amount        = extractAmount(from: trimmed)
         result.merchantName  = extractMerchant(from: trimmed)
+        result.accountHint   = extractAccountHint(from: trimmed)
         result.transactionType = detectTransactionType(from: trimmed)
         result.paymentMethod = detectPaymentMethod(from: trimmed)
 
@@ -129,8 +130,12 @@ struct RuleBasedProvider: AIProvider {
     // MARK: - Merchant Extraction
 
     private func extractMerchant(from input: String) -> String? {
+        // Remove account hints first
+        let accountHintRegex = try? NSRegularExpression(pattern: #"(?:using|from|with|pakai|via)\s+[a-zA-Z0-9]+"#, options: .caseInsensitive)
+        let cleanedInput = accountHintRegex?.stringByReplacingMatches(in: input, range: NSRange(input.startIndex..., in: input), withTemplate: "") ?? input
+
         // Strip known date words and amount-like tokens, what remains is the merchant.
-        var words = input.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        var words = cleanedInput.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
 
         // Remove date keywords
         let dateKeywords = Set([
@@ -165,6 +170,16 @@ struct RuleBasedProvider: AIProvider {
             if lower.contains(kw) { return .income }
         }
         return .expense
+    }
+    
+    // MARK: - Account Extraction
+    
+    private func extractAccountHint(from input: String) -> String? {
+        let pattern = #"(?:using|from|with|pakai|via)\s+([a-zA-Z0-9]+)"#
+        if let match = input.lowercased().firstMatch(pattern: pattern), let account = match {
+            return account.capitalized
+        }
+        return nil
     }
 
     // MARK: - Payment Method Detection

@@ -23,6 +23,7 @@ final class AppContainer {
     let transactionService: TransactionService
     let categoryService: CategoryService
     let ocrService: OCRService
+    let accountRepository: AccountRepository
 
     // MARK: - Persistence
 
@@ -52,6 +53,7 @@ final class AppContainer {
         self.transactionService  = TransactionService(context: context)
         self.categoryService     = CategoryService(context: context)
         self.ocrService          = OCRService()
+        self.accountRepository   = AccountRepository(context: context)
     }
 
     // MARK: - Onboarding Completion

@@ -31,6 +31,9 @@ final class Transaction: Identifiable {
     @Relationship(deleteRule: .nullify)
     var account: Account?
 
+    /// If this transaction is part of a transfer, links to the other side
+    var linkedTransferID: UUID?
+
     @Relationship(deleteRule: .nullify)
     var category: Category?
 
