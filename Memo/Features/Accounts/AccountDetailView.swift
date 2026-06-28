@@ -14,17 +14,35 @@ struct AccountDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AppContainer.self) private var appContainer
     
-    @State private var viewModel: AccountFormViewModel
+    @State private var viewModel: AccountFormViewModel?
+    private let accountToEdit: Account?
     
     init(account: Account? = nil, context: ModelContext, defaultCurrency: String) {
-        _viewModel = State(wrappedValue: AccountFormViewModel(
-            account: account,
-            modelContext: context,
-            defaultCurrency: defaultCurrency
-        ))
+        self.accountToEdit = account
     }
     
     var body: some View {
+        Group {
+            if let vm = viewModel {
+                content(viewModel: vm)
+            } else {
+                Color.memoBackground
+            }
+        }
+        .onAppear {
+            if viewModel == nil {
+                viewModel = AccountFormViewModel(
+                    account: accountToEdit,
+                    modelContext: modelContext,
+                    defaultCurrency: appContainer.preferredCurrencyCode
+                )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func content(viewModel: AccountFormViewModel) -> some View {
+        @Bindable var viewModel = viewModel
         Form {
             Section("Account Details") {
                 TextField("Name", text: $viewModel.name)
@@ -52,9 +70,9 @@ struct AccountDetailView: View {
                 
                 HStack {
                     Text("Opening Balance")
-                    Spacer()
                     CurrencyTextField(placeholder: "0", text: $viewModel.openingBalanceString)
-                        .frame(height: 32)
+                        .frame(maxWidth: .infinity, minHeight: 32)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 
                 if let account = viewModel.existingAccount {

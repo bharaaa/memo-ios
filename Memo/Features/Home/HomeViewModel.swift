@@ -12,21 +12,37 @@ import Observation
 final class HomeViewModel {
 
     // MARK: - State
-
-    var todayTransactions: [Transaction] = []
-    var todayTotal: Decimal = 0
+    
+    var recentTransactions: [Transaction] = []
+    var totalAssets: Decimal = 0
     var greeting: String = ""
+    
+    // Composer State
+    var inputText: String = ""
+    var isProcessing: Bool = false
+    var parsedTransaction: ParsedTransaction?
+    var parseError: String?
 
     // MARK: - Dependencies
 
     private let transactionService: TransactionService
+    private let accountRepository: AccountRepository
+    private let memoService: MemoService
     private let currency: String
     private let userName: String
 
     // MARK: - Init
 
-    init(transactionService: TransactionService, currency: String, userName: String) {
+    init(
+        transactionService: TransactionService,
+        accountRepository: AccountRepository,
+        memoService: MemoService,
+        currency: String,
+        userName: String
+    ) {
         self.transactionService = transactionService
+        self.accountRepository = accountRepository
+        self.memoService = memoService
         self.currency = currency
         self.userName = userName
     }
@@ -34,10 +50,8 @@ final class HomeViewModel {
     // MARK: - Load
 
     func load() {
-        todayTransactions = transactionService.todaysTransactions()
-        todayTotal = todayTransactions
-            .filter { $0.transactionType == .expense }
-            .reduce(Decimal(0)) { $0 + $1.amount }
+        recentTransactions = transactionService.recentTransactions(limit: 5)
+        totalAssets = accountRepository.totalAssets()
         greeting = buildGreeting()
     }
 
@@ -53,19 +67,40 @@ final class HomeViewModel {
         default:      timeGreeting = "Good night"
         }
         let name = userName.isEmpty ? "" : ", \(userName)"
-        return "\(timeGreeting)\(name) 👋"
+        return "\(timeGreeting)\(name)"
+    }
+    
+    // MARK: - Composer Actions
+    
+    func send() async {
+        let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        
+        isProcessing = true
+        parseError = nil
+        
+        do {
+            let parsed = try await memoService.parse(input: text)
+            isProcessing = false
+            
+            if parsed.isUsable {
+                parsedTransaction = parsed
+                inputText = ""
+            } else {
+                parseError = "I couldn't quite understand that. Could you try again with an amount?"
+            }
+        } catch AIProviderError.unavailable {
+            isProcessing = false
+            parseError = "AI is not available right now. Try a simpler format like \"Coffee 35k\"."
+        } catch {
+            isProcessing = false
+            parseError = "Something went wrong: \(error.localizedDescription)"
+        }
     }
 
-    // MARK: - Today Summary
-
-    var todaySummaryText: String {
-        if todayTransactions.isEmpty { return "Nothing recorded yet today" }
-        let count = todayTransactions.count
-        let word = count == 1 ? "transaction" : "transactions"
-        return "\(count) \(word) today"
-    }
-
-    var formattedTodayTotal: String {
-        todayTotal.formatted(currency: currency)
+    // MARK: - Balance Formatting
+    
+    var formattedTotalAssets: String {
+        totalAssets.formatted(currency: currency)
     }
 }

@@ -233,6 +233,18 @@ final class TransactionService {
         descriptor.fetchLimit = limit
         return (try? context.fetch(descriptor)) ?? []
     }
+    
+    func currentMonthTransactions() -> [Transaction] {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: Date())
+        guard let startOfMonth = calendar.date(from: components) else { return [] }
+        
+        let descriptor = FetchDescriptor<Transaction>(
+            predicate: #Predicate { $0.date >= startOfMonth },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        return (try? context.fetch(descriptor)) ?? []
+    }
 
     // MARK: - Helpers
 

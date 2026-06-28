@@ -23,6 +23,12 @@ struct CurrencyTextField: UIViewRepresentable {
         textField.font = font
         textField.textColor = textColor
         
+        textField.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        
+        textField.setContentHuggingPriority(.required, for: .vertical)
+        textField.setContentCompressionResistancePriority(.required, for: .vertical)
+        
         // Add a toolbar with a "Done" button to dismiss keyboard
         let toolbar = UIToolbar()
         toolbar.sizeToFit()

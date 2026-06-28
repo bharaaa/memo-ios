@@ -12,24 +12,45 @@ struct TransferView: View {
     @Environment(AppContainer.self) private var appContainer
     @Environment(\.modelContext) private var modelContext
     
-    @State private var viewModel: TransferViewModel
+    @State private var viewModel: TransferViewModel?
     
     @Query(filter: #Predicate<Account> { $0.isArchived == false }, sort: \Account.sortOrder)
     private var accounts: [Account]
     
     init(context: ModelContext, transactionService: TransactionService) {
-        _viewModel = State(wrappedValue: TransferViewModel(transactionService: transactionService, modelContext: context))
+        // Init happens in onAppear
     }
     
     var body: some View {
         NavigationStack {
-            Form {
+            Group {
+                if let vm = viewModel {
+                    content(viewModel: vm)
+                } else {
+                    Color.memoBackground
+                }
+            }
+            .onAppear {
+                if viewModel == nil {
+                    viewModel = TransferViewModel(
+                        transactionService: appContainer.transactionService,
+                        modelContext: modelContext
+                    )
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func content(viewModel: TransferViewModel) -> some View {
+        @Bindable var viewModel = viewModel
+        Form {
                 Section {
                     HStack {
                         Text("Amount")
-                        Spacer()
                         CurrencyTextField(placeholder: "0", text: $viewModel.amountString)
-                            .frame(height: 32)
+                            .frame(maxWidth: .infinity, minHeight: 32)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     
                     Picker("From", selection: $viewModel.sourceAccount) {
@@ -78,4 +99,3 @@ struct TransferView: View {
             }
         }
     }
-}

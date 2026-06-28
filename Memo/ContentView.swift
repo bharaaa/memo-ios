@@ -36,19 +36,25 @@ struct ContentView: View {
     private var mainTabs: some View {
         TabView(selection: $selectedTab) {
             // Home
-            Tab("Home", systemImage: "house.fill", value: 0) {
-                HomeView()
-            }
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house.fill")
+                }
+                .tag(0)
 
             // Memories (all transactions)
-            Tab("Memories", systemImage: "brain", value: 1) {
-                TransactionListView()
-            }
+            TransactionListView()
+                .tabItem {
+                    Label("Memories", systemImage: "brain")
+                }
+                .tag(1)
 
             // Settings
-            Tab("Settings", systemImage: "gearshape.fill", value: 2) {
-                SettingsView()
-            }
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
+                .tag(2)
         }
         .tint(.memoPrimary)
     }
