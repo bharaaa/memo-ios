@@ -15,7 +15,8 @@ final class HomeViewModel {
     
     var recentTransactions: [Transaction] = []
     var totalAssets: Decimal = 0
-    var greeting: String = ""
+    var timeGreeting: String = ""
+    var userGreetingName: String = ""
     
     // Composer State
     var inputText: String = ""
@@ -56,22 +57,23 @@ final class HomeViewModel {
         recentTransactions = transactionRepository.recentTransactions(limit: 5)
         totalAssets = accountRepository.totalAssets()
         accounts = accountRepository.allAccounts()
-        greeting = buildGreeting()
+        let (time, name) = buildGreetingParts()
+        timeGreeting = time
+        userGreetingName = name
     }
 
     // MARK: - Greeting
 
-    private func buildGreeting() -> String {
+    private func buildGreetingParts() -> (String, String) {
         let hour = Calendar.current.component(.hour, from: Date())
-        let timeGreeting: String
+        let timeString: String
         switch hour {
-        case 5..<12:  timeGreeting = "Good morning"
-        case 12..<17: timeGreeting = "Good afternoon"
-        case 17..<21: timeGreeting = "Good evening"
-        default:      timeGreeting = "Good night"
+        case 5..<12:  timeString = "Good morning"
+        case 12..<17: timeString = "Good afternoon"
+        case 17..<21: timeString = "Good evening"
+        default:      timeString = "Good night"
         }
-        let name = userName.isEmpty ? "" : ", \(userName)"
-        return "\(timeGreeting)\(name)"
+        return (timeString, userName.isEmpty ? "" : userName)
     }
     
     // MARK: - Composer Actions

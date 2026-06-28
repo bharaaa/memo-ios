@@ -1,3 +1,10 @@
+//
+//  BalanceSection.swift
+//  Memo
+//
+//  Displays the total balance as the visual hero, followed by account cards.
+//
+
 import SwiftUI
 
 struct BalanceSection: View {
@@ -7,103 +14,140 @@ struct BalanceSection: View {
     @AppStorage("isBalanceHidden") private var isBalanceHidden = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Header
-            Text("TOTAL BALANCE")
-                .font(.memoCaption)
-                .foregroundStyle(.memoTertiaryText)
-                .textCase(.uppercase)
-                .tracking(0.8)
-                .memoScreenPadding()
+        VStack(alignment: .leading, spacing: 16) {
             
-            // Total Balance
-            HStack {
-                Text(isBalanceHidden ? "Rp •••••••••" : totalAssets)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(.memoPrimaryText)
+            // MARK: - Total Balance Hero
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Total Balance")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondary)
+                    .textCase(.uppercase)
                 
-                Spacer()
-                
-                Button {
-                    isBalanceHidden.toggle()
-                } label: {
-                    Image(systemName: isBalanceHidden ? "eye.slash.fill" : "eye.fill")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.memoTertiaryText)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(isBalanceHidden ? "Rp •••••••••" : totalAssets)
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .foregroundStyle(Color.primary)
+                    
+                    Spacer()
+                    
+                    Button {
+                        withAnimation(.spring) {
+                            isBalanceHidden.toggle()
+                        }
+                    } label: {
+                        Image(systemName: isBalanceHidden ? "eye.slash.fill" : "eye.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Color.secondary)
+                    }
                 }
             }
             .memoScreenPadding()
-            .padding(.bottom, 12)
             
-            // Accounts Card
-            VStack(spacing: 0) {
-                ForEach(Array(accounts.enumerated()), id: \.element.id) { index, account in
-                    NavigationLink(value: account) {
-                        AccountListRow(account: account, isBalanceHidden: isBalanceHidden)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    Divider()
-                        .padding(.leading, 56)
-                }
-                
+            // MARK: - Account Cards (Wallet Passes)
+            if accounts.isEmpty {
+                // Empty state for accounts
                 NavigationLink(value: "ViewAllAccounts") {
-                    Text("View all accounts")
-                        .font(.memoBody)
-                        .foregroundStyle(Color.memoPrimary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(Color.memoPrimary)
+                        Text("Add an Account")
+                            .font(.body)
+                            .foregroundStyle(Color.primary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(UIColor.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .memoScreenPadding()
                 }
                 .buttonStyle(.plain)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(accounts) { account in
+                            NavigationLink(value: account) {
+                                WalletPassCard(account: account, isBalanceHidden: isBalanceHidden)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        
+                        // View All Button
+                        NavigationLink(value: "ViewAllAccounts") {
+                            VStack {
+                                Image(systemName: "ellipsis.circle.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(Color(UIColor.tertiaryLabel))
+                                Text("View All")
+                                    .font(.caption)
+                                    .foregroundStyle(Color.secondary)
+                                    .padding(.top, 4)
+                            }
+                            .frame(width: 100, height: 110)
+                            .background(Color(UIColor.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 24) // Match memoScreenPadding
+                }
             }
-            .memoCardStyle()
-            .memoScreenPadding()
         }
         .padding(.bottom, 24)
     }
 }
 
-fileprivate struct AccountListRow: View {
+fileprivate struct WalletPassCard: View {
     let account: Account
     let isBalanceHidden: Bool
     
     var body: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color(hex: account.colorHex).opacity(0.15))
-                    .frame(width: 40, height: 40)
-                Image(systemName: account.icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Color(hex: account.colorHex))
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                // Compact icon
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: account.colorHex))
+                        .frame(width: 28, height: 28)
+                    Image(systemName: account.icon)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                
+                Text(account.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(Color.primary)
+                    .lineLimit(1)
+                
+                Spacer(minLength: 16)
             }
             
-            Text(account.name)
-                .font(.memoBody)
-                .foregroundStyle(.memoPrimaryText)
-            
-            Spacer()
-            
-            if isBalanceHidden {
-                Text("••••••")
-                    .font(.memoBody)
-                    .foregroundStyle(.memoPrimaryText)
-            } else {
-                AmountText(
-                    amount: account.currentBalance,
-                    currencyCode: account.currencyCode,
-                    transactionType: account.currentBalance < 0 ? .expense : .income,
-                    size: .small,
-                    showSign: false
-                )
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Current Balance")
+                    .font(.caption2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.secondary)
+                
+                if isBalanceHidden {
+                    Text("••••••")
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                } else {
+                    AmountText(
+                        amount: account.currentBalance,
+                        currencyCode: account.currencyCode,
+                        transactionType: account.currentBalance < 0 ? .expense : .income,
+                        size: .regular,
+                        showSign: false
+                    )
+                }
             }
-            
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.memoTertiaryText)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
+        .padding(16)
+        .frame(width: 200, height: 110, alignment: .topLeading)
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
     }
 }

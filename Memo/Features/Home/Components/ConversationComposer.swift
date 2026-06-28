@@ -1,3 +1,10 @@
+//
+//  ConversationComposer.swift
+//  Memo
+//
+//  A native, Apple-style input composer.
+//
+
 import SwiftUI
 
 struct ConversationComposer: View {
@@ -11,64 +18,66 @@ struct ConversationComposer: View {
     
     @FocusState private var isFocused: Bool
     
-    let suggestions = [
+    // Auto-rotate placeholders for inspiration
+    @State private var placeholderIndex = 0
+    let placeholders = [
+        "Remember an expense...",
         "Coffee 35k",
         "Lunch 45k yesterday",
-        "Grab 95k",
-        "Netflix 59k using Jago",
-        "Groceries 180k"
+        "Paid Netflix using Jago",
+        "Transfer 500k to GoPay"
     ]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             // Composer Box
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 // Text Input area
                 HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "bubble.left")
-                        .font(.system(size: 20))
+                    Image(systemName: "pencil")
+                        .font(.system(size: 18, weight: .regular))
                         .foregroundStyle(Color.memoPrimary)
                         .padding(.top, 8)
                     
                     ZStack(alignment: .topLeading) {
                         if text.isEmpty && !isFocused {
-                            Text("Remember an expense...")
-                                .font(.memoBody)
-                                .foregroundStyle(.memoTertiaryText)
+                            Text(placeholders[placeholderIndex])
+                                .font(.body)
+                                .foregroundStyle(Color(UIColor.placeholderText))
                                 .padding(.top, 8)
                                 .allowsHitTesting(false)
                         }
                         
                         TextField("", text: $text, axis: .vertical)
-                            .font(.memoBody)
-                            .foregroundStyle(.memoPrimaryText)
+                            .font(.body)
+                            .foregroundStyle(Color.primary)
                             .focused($isFocused)
                             .padding(.top, 8)
                             .padding(.bottom, 8)
-                            .lineLimit(1...5)
+                            .lineLimit(1...6)
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 8)
+                .padding(.top, 6)
                 
                 // Toolbar Area
-                HStack(spacing: 20) {
+                HStack(spacing: 24) {
                     Button(action: onImport) {
                         Image(systemName: "paperclip")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.memoSecondaryText)
+                            .font(.system(size: 20, weight: .regular))
+                            .foregroundStyle(Color.secondary)
                     }
                     
                     Button(action: onScan) {
                         Image(systemName: "camera")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.memoSecondaryText)
+                            .font(.system(size: 20, weight: .regular))
+                            .foregroundStyle(Color.secondary)
                     }
                     
                     Button(action: onSpeak) {
                         Image(systemName: "mic")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.memoSecondaryText)
+                            .font(.system(size: 20, weight: .regular))
+                            .foregroundStyle(Color.secondary)
                     }
                     
                     Spacer()
@@ -76,57 +85,46 @@ struct ConversationComposer: View {
                     Button(action: onSend) {
                         if isProcessing {
                             ProgressView()
-                                .tint(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Color.memoPrimary)
-                                .clipShape(Circle())
+                                .tint(Color.memoPrimary)
+                                .frame(width: 32, height: 32)
                         } else {
-                            Image(systemName: "arrow.up")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .frame(width: 44, height: 44)
-                                .background(Color.memoPrimary.opacity(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1.0))
-                                .clipShape(Circle())
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundStyle(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color(UIColor.quaternaryLabel) : Color.memoPrimary)
                         }
                     }
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isProcessing)
-                    .animation(.easeInOut, value: text.isEmpty)
-                    .animation(.easeInOut, value: isProcessing)
+                    .animation(.easeInOut(duration: 0.2), value: text.isEmpty)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
             }
-            .memoCardStyle()
+            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.memoPrimary.opacity(0.3), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(Color(UIColor.separator).opacity(0.5), lineWidth: 0.5)
             )
-            .shadow(color: Color.memoPrimary.opacity(0.05), radius: 10, x: 0, y: 4)
+            .shadow(color: Color.black.opacity(0.04), radius: 8, x: 0, y: 4)
             .memoScreenPadding()
             
-            // Suggestion Chips
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(suggestions, id: \.self) { suggestion in
-                        Button {
-                            text = suggestion
-                            isFocused = true
-                        } label: {
-                            Text(suggestion)
-                                .font(.memoCaption)
-                                .foregroundStyle(Color.memoPrimary)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(Color.white)
-                                .clipShape(Capsule())
-                                .overlay(
-                                    Capsule()
-                                        .stroke(Color.memoPrimary.opacity(0.2), lineWidth: 1)
-                                )
-                        }
-                    }
-                }
-                .memoScreenPadding()
+            // Subtle guidance below composer
+            if !isFocused && text.isEmpty {
+                Text("Type naturally, AI will organize it.")
+                    .font(.caption)
+                    .foregroundStyle(Color.secondary)
+                    .padding(.horizontal, 32)
+            }
+        }
+        .onAppear {
+            startPlaceholderTimer()
+        }
+    }
+    
+    private func startPlaceholderTimer() {
+        Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                placeholderIndex = (placeholderIndex + 1) % placeholders.count
             }
         }
     }

@@ -1,21 +1,32 @@
+//
+//  GreetingSection.swift
+//  Memo
+//
+//  A lightweight, native greeting.
+//
+
 import SwiftUI
 
 struct GreetingSection: View {
-    let greeting: String
+    let timeGreeting: String
+    let userName: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(greeting)
-                .font(.memoLargeTitle)
-                .foregroundStyle(.memoPrimaryText)
-                
-            Text("What do you remember spending today?")
-                .font(.memoSubheadline)
+        VStack(alignment: .leading, spacing: 4) {
+            Text("\(timeGreeting)\(userName.isEmpty ? "" : ",")")
+                .font(.subheadline)
                 .foregroundStyle(.memoSecondaryText)
+                
+            if !userName.isEmpty {
+                Text(userName)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.memoPrimaryText)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .memoScreenPadding()
-        .padding(.top, 24)
-        .padding(.bottom, 24)
+        .padding(.top, 16)
+        .padding(.bottom, 16)
     }
 }

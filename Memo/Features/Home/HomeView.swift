@@ -26,7 +26,10 @@ struct HomeView: View {
                         // Top Padding for Notification Bell
                         Color.clear.frame(height: 16)
                         
-                        GreetingSection(greeting: viewModel?.greeting ?? "Hello 👋")
+                        GreetingSection(
+                            timeGreeting: viewModel?.timeGreeting ?? "Hello",
+                            userName: viewModel?.userGreetingName ?? ""
+                        )
                         
                         if let vm = viewModel {
                             ConversationComposer(

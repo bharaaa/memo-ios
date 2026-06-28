@@ -1,3 +1,10 @@
+//
+//  RecentMemoriesSection.swift
+//  Memo
+//
+//  Displays a native Apple-style list of recent transactions.
+//
+
 import SwiftUI
 
 struct RecentMemoriesSection: View {
@@ -8,28 +15,34 @@ struct RecentMemoriesSection: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Recent Memories")
-                    .font(.memoCaption)
-                    .foregroundStyle(.memoTertiaryText)
+                    .font(.subheadline)
+                    .foregroundStyle(Color.secondary)
                     .textCase(.uppercase)
-                    .tracking(0.8)
                 Spacer()
                 NavigationLink(value: "SeeAll") {
                     Text("See All")
-                        .font(.memoCaption)
-                        .foregroundStyle(.memoPrimary)
+                        .font(.subheadline)
+                        .foregroundStyle(Color.memoPrimary)
                 }
             }
             .memoScreenPadding()
             
             if transactions.isEmpty {
-                EmptyState(
-                    icon: "sparkles",
-                    title: "Nothing remembered yet.",
-                    message: "Start by typing an expense or importing a receipt.",
-                    action: onEmptyAction,
-                    actionLabel: "Add first memory"
-                )
-                .padding(.top, 8)
+                VStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 32))
+                        .foregroundStyle(Color.secondary)
+                    
+                    Text("Nothing remembered yet.")
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                    
+                    Text("Try typing: Coffee 35k")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
             } else {
                 VStack(spacing: 0) {
                     ForEach(transactions) { transaction in
@@ -44,11 +57,13 @@ struct RecentMemoriesSection: View {
                         }
                     }
                 }
-                .memoCardStyle()
+                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .memoScreenPadding()
             }
         }
         .padding(.top, 16)
+        .padding(.bottom, 32)
     }
 }
 
@@ -60,24 +75,24 @@ struct MemoryRowView: View {
             // Category Icon
             ZStack {
                 Circle()
-                    .fill(categoryColor.opacity(0.15))
-                    .frame(width: 40, height: 40)
+                    .fill(categoryColor)
+                    .frame(width: 36, height: 36)
                 
                 Image(systemName: transaction.category?.icon ?? transaction.transactionType.symbol)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(categoryColor)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white)
             }
             
             // Details
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(titleText)
-                    .font(.memoHeadline)
-                    .foregroundStyle(.memoPrimaryText)
+                    .font(.body)
+                    .foregroundStyle(Color.primary)
                     .lineLimit(1)
                 
                 Text("\(transaction.account?.name ?? "Unknown") • \(relativeDateString(for: transaction.date))")
-                    .font(.memoCaption)
-                    .foregroundStyle(.memoTertiaryText)
+                    .font(.caption)
+                    .foregroundStyle(Color.secondary)
             }
             
             Spacer()
@@ -90,8 +105,8 @@ struct MemoryRowView: View {
             )
             
             Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.memoTertiaryText)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color(UIColor.tertiaryLabel))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
