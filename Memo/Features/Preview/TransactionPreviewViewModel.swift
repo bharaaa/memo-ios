@@ -33,6 +33,7 @@ final class TransactionPreviewViewModel {
     // For tracking if user manually overrode AI
     private(set) var userDidSelectCategory = false
     private(set) var userDidSelectAccount = false
+    private(set) var userDidSelectPaymentMethod = false
 
     // MARK: - Meta
 
@@ -110,8 +111,10 @@ final class TransactionPreviewViewModel {
         }
         
         // Payment Method
-        if paymentMethod == (originalParsed.paymentMethod ?? .cash) && newParsed.paymentMethod != nil {
-            paymentMethod = newParsed.paymentMethod!
+        if !userDidSelectPaymentMethod {
+            if let pm = newParsed.paymentMethod {
+                paymentMethod = pm
+            }
         }
         
         // Category
@@ -150,6 +153,11 @@ final class TransactionPreviewViewModel {
     func userSelected(account: Account) {
         selectedAccount = account
         userDidSelectAccount = true
+    }
+    
+    func userSelected(paymentMethod: PaymentMethod) {
+        self.paymentMethod = paymentMethod
+        userDidSelectPaymentMethod = true
     }
 
     @discardableResult

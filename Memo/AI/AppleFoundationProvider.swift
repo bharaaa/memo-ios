@@ -139,11 +139,11 @@ struct AppleFoundationProvider: AIProvider {
 /// The @Generable type that Foundation Models will populate.
 /// All fields are optional so partial results are still useful.
 @Generable
-private struct TransactionExtractionOutput {
+struct TransactionExtractionOutput {
     @Guide(description: "The numeric amount of money involved, represented as a string. Apply k/m multipliers.")
     var amount: String?
 
-    @Guide(description: "ISO 4217 currency code if mentioned (e.g. IDR, USD). Null if not specified.")
+    @Guide(description: "ISO 4217 currency code if mentioned, for example IDR, USD. Null if not specified.")
     var currencyCode: String?
 
     @Guide(description: "The merchant, payee, or store name. Null if unclear.")
@@ -152,13 +152,13 @@ private struct TransactionExtractionOutput {
     @Guide(description: "A simple spending category hint: food, transport, shopping, entertainment, health, bills, education, travel, salary, other.")
     var categoryHint: String?
 
-    @Guide(description: "A hint for the account used if mentioned (e.g. cash, bank, credit card, bca). Null if not specified.")
+    @Guide(description: "A hint for the account used if mentioned, for example cash, bank, credit card, bca. Null if not specified.")
     var accountHint: String?
 
     @Guide(description: "A short note or descriptive summary of the purchase intelligently inferred from the input. Do not leave null if you can infer a context.")
     var note: String?
 
-    @Guide(description: "ISO 8601 date (YYYY-MM-DD) if a date is mentioned. Empty if not.")
+    @Guide(description: "ISO 8601 date YYYY-MM-DD if a date is mentioned. Empty if not.")
     var dateString: String?
 
     @Guide(description: "expense or income. Default to expense.")

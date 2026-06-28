@@ -73,9 +73,11 @@ struct TransactionPreviewView: View {
                         transactionType: Binding(get: { vm.transactionType }, set: { vm.transactionType = $0 }),
                         category: vm.selectedCategory,
                         account: vm.selectedAccount,
-                        paymentMethod: Binding(get: { vm.paymentMethod }, set: { vm.paymentMethod = $0 }),
+                        paymentMethod: Binding(get: { vm.paymentMethod }, set: { vm.userSelected(paymentMethod: $0) }),
                         date: Binding(get: { vm.date }, set: { vm.date = $0 }),
-                        status: vm.status,
+                        isThinkingCategory: vm.status == .parsing && !vm.userDidSelectCategory,
+                        isThinkingAccount: vm.status == .parsing && !vm.userDidSelectAccount,
+                        isThinkingPayment: vm.status == .parsing && !vm.userDidSelectPaymentMethod,
                         onCategoryTap: { vm.showCategoryPicker = true },
                         onAccountTap: { vm.showAccountPicker = true }
                     )

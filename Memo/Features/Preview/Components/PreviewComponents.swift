@@ -163,7 +163,10 @@ struct EditableDetailSection: View {
     let account: Account?
     @Binding var paymentMethod: PaymentMethod
     @Binding var date: Date
-    let status: ParsingStatus
+    
+    let isThinkingCategory: Bool
+    let isThinkingAccount: Bool
+    let isThinkingPayment: Bool
     
     let onCategoryTap: () -> Void
     let onAccountTap: () -> Void
@@ -195,7 +198,7 @@ struct EditableDetailSection: View {
                 icon: catIcon,
                 iconColor: categoryColor,
                 valueContent: {
-                    if status == .parsing && category == nil {
+                    if isThinkingCategory {
                         HStack(spacing: 6) {
                             ProgressView()
                                 .controlSize(.small)
@@ -216,25 +219,53 @@ struct EditableDetailSection: View {
             let accColor = account != nil ? Color(hex: account!.colorHex) : Color.memoPrimary
             EditableRow(
                 title: "Account",
-                icon: accIcon,
+                icon: isThinkingAccount ? "circle.dashed" : accIcon,
                 iconColor: accColor,
-                valueContent: { Text(accName) },
+                valueContent: {
+                    if isThinkingAccount {
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Thinking…")
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Text(accName)
+                    }
+                },
                 action: onAccountTap
             )
             
             // Payment Method
             EditableRow(
                 title: "Payment",
-                icon: "banknote",
+                icon: isThinkingPayment ? "circle.dashed" : "banknote",
                 iconColor: Color.memoIncome,
                 valueContent: {
-                    Picker("Payment", selection: $paymentMethod) {
-                        ForEach(PaymentMethod.allCases, id: \.self) { m in
-                            Text(m.displayName).tag(m)
+                    if isThinkingPayment {
+                        Menu {
+                            Picker("Payment", selection: $paymentMethod) {
+                                ForEach(PaymentMethod.allCases, id: \.self) { m in
+                                    Text(m.displayName).tag(m)
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                ProgressView()
+                                    .controlSize(.small)
+                                Text("Thinking…")
+                            }
+                            .foregroundStyle(.secondary)
                         }
+                    } else {
+                        Picker("Payment", selection: $paymentMethod) {
+                            ForEach(PaymentMethod.allCases, id: \.self) { m in
+                                Text(m.displayName).tag(m)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(.secondary)
                     }
-                    .pickerStyle(.menu)
-                    .tint(.secondary)
                 },
                 action: nil
             )
