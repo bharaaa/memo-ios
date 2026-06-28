@@ -17,6 +17,13 @@ struct SettingsView: View {
     @AppStorage("userName") private var userName = ""
 
     @State private var showLogoutConfirmation = false
+    
+    enum SettingsRoute: Hashable {
+        case appearance
+        case accounts
+        case categories
+        case budgets
+    }
 
     var body: some View {
         NavigationStack {
@@ -49,22 +56,22 @@ struct SettingsView: View {
                 
                 // MARK: Appearance
                 Section("Appearance") {
-                    NavigationLink(destination: Text("Appearance Settings Coming Soon").navigationTitle("Appearance")) {
+                    NavigationLink(value: SettingsRoute.appearance) {
                         Label("Theme & App Icon", systemImage: "paintpalette.fill")
                     }
                 }
                 
                 // MARK: Data
                 Section("Data") {
-                    NavigationLink(destination: AccountListView()) {
+                    NavigationLink(value: SettingsRoute.accounts) {
                         Label("Accounts", systemImage: "building.columns.fill")
                     }
                     
-                    NavigationLink(destination: CategoryListView()) {
+                    NavigationLink(value: SettingsRoute.categories) {
                         Label("Categories", systemImage: "tag.fill")
                     }
                     
-                    NavigationLink(destination: Text("Budgets Coming Soon").navigationTitle("Budgets")) {
+                    NavigationLink(value: SettingsRoute.budgets) {
                         Label("Budgets", systemImage: "chart.pie.fill")
                     }
                 }
@@ -168,6 +175,18 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .task { await loadProviderStatus() }
+            .navigationDestination(for: SettingsRoute.self) { route in
+                switch route {
+                case .appearance:
+                    Text("Appearance Settings Coming Soon").navigationTitle("Appearance")
+                case .accounts:
+                    AccountListView()
+                case .categories:
+                    CategoryListView()
+                case .budgets:
+                    Text("Budgets Coming Soon").navigationTitle("Budgets")
+                }
+            }
         }
         .sheet(isPresented: $showCurrencyPicker) {
             NavigationStack {
